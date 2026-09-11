@@ -5,13 +5,14 @@
 ## 📁 Cấu trúc kho
 
 ```
-index.html      → trang chủ, dẫn vào hai bản chỉnh sửa
-editor/         → bản cơ bản        (/editor/)
-editor-pro/     → bản nâng cao      (/editor-pro/)
+index.html      → trang chủ, chính là bản chỉnh sửa nâng cao (Layer Management)
 server/         → máy chủ API mẫu cho các tính năng AI (chạy tại máy)
 docs/           → toàn bộ tài liệu
 .github/workflows/deploy.yml → tự deploy lên GitHub Pages mỗi lần đẩy lên main
 ```
+
+> Bản cơ bản (chỉ dùng công cụ đơn giản, không có quản lý lớp) đã được gỡ bỏ.
+> Trang chủ giờ chạy thẳng bản nâng cao.
 
 > Lưu ý: các tính năng AI gọi tới `http://localhost:8000/api`. Trên GitHub Pages
 > (chạy bằng HTTPS) trình duyệt sẽ chặn lời gọi này; muốn dùng thì phải trỏ
@@ -67,7 +68,7 @@ docs/           → toàn bộ tài liệu
 
 ### 1. **Mở File**
 ```html
-Mở file `editor/index.html` trong trình duyệt (Chrome, Firefox, Safari, Edge)
+Mở file `index.html` trong trình duyệt (Chrome, Firefox, Safari, Edge)
 ```
 
 ### 2. **Tải Ảnh**
@@ -212,46 +213,15 @@ function upscaleImage() {
 }
 ```
 
-### 4. **Xoá Đối Tượng (Object Removal)**
-
-**File:** Tìm function `removeObject()` (dòng ~622)
-
-**Thay thế:**
-```javascript
-function removeObject() {
-    showLoading('Đang xoá đối tượng...');
-    
-    const imageData = canvas.toDataURL('image/png');
-    
-    fetch(`${API_BASE_URL}/remove-object`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageData })
-    })
-    .then(res => res.json())
-    .then(data => {
-        fabric.Image.fromURL(data.result_image, function(img) {
-            img.scale(canvas.width / img.width);
-            canvas.clear();
-            canvas.add(img);
-            canvas.renderAll();
-            saveToHistory();
-            hideLoading();
-            showToast('Đã xoá đối tượng thành công', 'success');
-        });
-    })
-    .catch(err => {
-        hideLoading();
-        showToast('Lỗi: ' + err.message, 'error');
-    });
-}
-```
+> Ba hàm trên (`removeBackground`, `executeInpaint`, `upscaleImage`) đều nằm
+> trong `index.html`; số dòng có thể lệch theo từng lần sửa, tìm bằng tên hàm
+> là chắc nhất.
 
 ---
 
 ## ⚙️ Cách Thay Đổi API URL
 
-**Dòng 433:**
+Tìm `const API_BASE_URL` gần đầu khối `<script>` trong `index.html`:
 ```javascript
 const API_BASE_URL = 'http://localhost:8000/api'; // ← Thay đổi URL tại đây
 ```
@@ -264,19 +234,8 @@ Thay `http://localhost:8000/api` bằng URL của API server của bạn.
 
 ### Thay Đổi Màu Chính
 
-**Tìm dòng 2 trong `<style>`:**
-```css
---primary-color: #667eea;     /* Xanh lam */
---secondary-color: #764ba2;   /* Tím */
-```
-
-### Thay Đổi Kích Thước Canvas Mặc Định
-
-**Dòng 457:**
-```javascript
-canvasElement.width = 800;    // Chiều rộng
-canvasElement.height = 600;   // Chiều cao
-```
+Tìm khối `:root { ... }` đầu `<style>` trong `index.html`, các biến
+`--layer-*-color` quy định màu từng lớp (layer).
 
 ---
 
@@ -353,7 +312,7 @@ Khi bạn cần:
 
 Để thử ngay:
 ```
-1. Mở file editor/index.html trong trình duyệt
+1. Mở file index.html trong trình duyệt
 2. Bấm "Tải Ảnh" 
 3. Chỉnh sửa bằng các công cụ
 4. Tải xuống kết quả
