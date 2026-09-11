@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Editor - Chỉnh Sửa Ảnh Thông Minh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-header {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-header:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 56px);
+            gap: 10px;
+            padding: 10px;
+        }
+
+        /* ===== SIDEBAR LEFT ===== */
+        .sidebar-left {
+            width: 260px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+
+        .tool-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #333;
+        }
+
+        .tool-btn:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .tool-btn.ai-feature {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-color: #667eea;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .tool-btn.ai-feature:hover {
+            background: linear-gradient(135deg, #667eea25 0%, #764ba225 100%);
+        }
+
+        .tool-btn i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* ===== CANVAS AREA ===== */
+        .canvas-container {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .canvas-toolbar {
+            background: #f8f9fa;
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .canvas-toolbar-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .canvas-toolbar-item:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .canvas-workspace {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f5f5f5;
+            position: relative;
+        }
+
+        #canvas {
+            max-width: 100%;
+            max-height: 100%;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .canvas-empty {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #999;
+            gap: 15px;
+        }
+
+        .canvas-empty i {
+            font-size: 3rem;
+            color: #ddd;
+        }
+
+        .canvas-empty p {
+            font-size: 1.1rem;
+        }
+
+        /* ===== SIDEBAR RIGHT ===== */
+        .sidebar-right {
+            width: 260px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .property-group {
+            margin-bottom: 15px;
+        }
+
+        .property-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .property-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .slider-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+
+        .slider-value {
+            min-width: 40px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        /* ===== MODAL DIALOG ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area i {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        /* ===== LOADING SPINNER ===== */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2100;
+        }
+
+        .loading.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* ===== TOAST NOTIFICATION ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 250px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success {
+            border-left: 4px solid #28a745;
+            color: #28a745;
+        }
+
+        .toast.error {
+            border-left: 4px solid #dc3545;
+            color: #dc3545;
+        }
+
+        .toast.info {
+            border-left: 4px solid #17a2b8;
+            color: #17a2b8;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 1200px) {
+            .sidebar-left,
+            .sidebar-right {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .main-container {
+                flex-wrap: wrap;
+            }
+
+            .sidebar-left,
+            .sidebar-right {
+                width: 100%;
+                max-height: 200px;
+            }
+
+            .canvas-container {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.1rem;
+                flex: 1;
+            }
+
+            .sidebar-left,
+            .sidebar-right {
+                display: none;
+            }
+
+            .main-container {
+                padding: 5px;
+                gap: 5px;
+            }
+
+            .canvas-toolbar {
+                flex-direction: column;
+                padding: 8px;
+                gap: 5px;
+            }
+
+            .canvas-toolbar-item {
+                width: 100%;
+            }
+
+            .modal-content {
+                max-width: 90vw;
+                padding: 20px;
+            }
+        }
+
+        /* ===== COLOR PICKER ===== */
+        .color-picker-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-input {
+            width: 50px;
+            height: 40px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* ===== UTILITIES ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .divider {
+            height: 1px;
+            background: #dee2e6;
+            margin: 10px 0;
+        }
+
+        /* ===== SCROLLBAR STYLING ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <h1>
+            <i class="fas fa-wand-magic-sparkles"></i>
+            AI Image Editor
+        </h1>
+        <div class="header-actions">
+            <button class="btn-header" onclick="showUploadModal()">
+                <i class="fas fa-upload"></i> Tải Ảnh
+            </button>
+            <button class="btn-header" onclick="downloadImage()">
+                <i class="fas fa-download"></i> Tải Xuống
+            </button>
+            <button class="btn-header" onclick="toggleFullscreen()">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        <!-- LEFT SIDEBAR -->
+        <div class="sidebar-left">
+            <!-- BASIC TOOLS -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-toolbox"></i> Công Cụ Cơ Bản
+                </div>
+                <button class="tool-btn" onclick="addText()">
+                    <i class="fas fa-font"></i> Thêm Text
+                </button>
+                <button class="tool-btn" onclick="addShape()">
+                    <i class="fas fa-shapes"></i> Hình Dạng
+                </button>
+                <button class="tool-btn" onclick="cropImage()">
+                    <i class="fas fa-crop"></i> Cắt Ảnh
+                </button>
+                <button class="tool-btn" onclick="rotateImage()">
+                    <i class="fas fa-rotate-right"></i> Xoay
+                </button>
+                <button class="tool-btn" onclick="flipImageHorizontal()">
+                    <i class="fas fa-arrows-alt-h"></i> Lật Ngang
+                </button>
+            </div>
+
+            <!-- AI FEATURES -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-brain"></i> Tính Năng AI
+                </div>
+                <button class="tool-btn ai-feature" onclick="removeBackground()">
+                    <i class="fas fa-eraser"></i> Xoá Nền
+                </button>
+                <button class="tool-btn ai-feature" onclick="showInpaintModal()">
+                    <i class="fas fa-paint-brush"></i> Sửa Vùng (Inpaint)
+                </button>
+                <button class="tool-btn ai-feature" onclick="upscaleImage()">
+                    <i class="fas fa-arrow-up"></i> Nâng Cấp Độ Phân Giải
+                </button>
+                <button class="tool-btn ai-feature" onclick="removeObject()">
+                    <i class="fas fa-ban"></i> Xoá Đối Tượng
+                </button>
+            </div>
+
+            <!-- FILTERS -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-filter"></i> Bộ Lọc
+                </div>
+                <button class="tool-btn" onclick="applyFilter('grayscale')">
+                    <i class="fas fa-image"></i> Đen Trắng
+                </button>
+                <button class="tool-btn" onclick="applyFilter('sepia')">
+                    <i class="fas fa-image"></i> Sepia
+                </button>
+                <button class="tool-btn" onclick="applyFilter('blur')">
+                    <i class="fas fa-image"></i> Mờ
+                </button>
+                <button class="tool-btn" onclick="applyFilter('saturate')">
+                    <i class="fas fa-image"></i> Bão Hòa
+                </button>
+            </div>
+
+            <!-- HISTORY -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-history"></i> Lịch Sử
+                </div>
+                <button class="tool-btn" onclick="undo()">
+                    <i class="fas fa-undo"></i> Hoàn Tác
+                </button>
+                <button class="tool-btn" onclick="redo()">
+                    <i class="fas fa-redo"></i> Làm Lại
+                </button>
+                <button class="tool-btn" onclick="resetCanvas()">
+                    <i class="fas fa-refresh"></i> Đặt Lại
+                </button>
+            </div>
+        </div>
+
+        <!-- CANVAS AREA -->
+        <div class="canvas-container">
+            <div class="canvas-toolbar">
+                <span style="font-weight: 600; color: #333;">Zoom:</span>
+                <button class="canvas-toolbar-item" onclick="zoomOut()">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <span class="canvas-toolbar-item" style="cursor: default; flex: 1; justify-content: center;">
+                    <span id="zoomLevel">100%</span>
+                </span>
+                <button class="canvas-toolbar-item" onclick="zoomIn()">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="canvas-toolbar-item" onclick="resetZoom()">
+                    <i class="fas fa-compress"></i> Phù Hợp
+                </button>
+            </div>
+            <div class="canvas-workspace">
+                <div class="canvas-empty">
+                    <i class="fas fa-image"></i>
+                    <p>Tải một ảnh để bắt đầu</p>
+                    <button class="btn-header" onclick="showUploadModal()">
+                        <i class="fas fa-upload"></i> Chọn Ảnh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="sidebar-right">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-sliders-h"></i> Điều Chỉnh
+                </div>
+
+                <div class="property-group">
+                    <label class="property-label">Độ Sáng</label>
+                    <div class="slider-container">
+                        <input type="range" id="brightness" min="0" max="200" value="100" 
+                               onchange="updateBrightness(this.value)">
+                        <span class="slider-value" id="brightnessValue">100%</span>
+                    </div>
+                </div>
+
+                <div class="property-group">
+                    <label class="property-label">Độ Tương Phản</label>
+                    <div class="slider-container">
+                        <input type="range" id="contrast" min="0" max="200" value="100" 
+                               onchange="updateContrast(this.value)">
+                        <span class="slider-value" id="contrastValue">100%</span>
+                    </div>
+                </div>
+
+                <div class="property-group">
+                    <label class="property-label">Bão Hòa Màu</label>
+                    <div class="slider-container">
+                        <input type="range" id="saturation" min="0" max="200" value="100" 
+                               onchange="updateSaturation(this.value)">
+                        <span class="slider-value" id="saturationValue">100%</span>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="property-group">
+                    <label class="property-label">Màu Tô</label>
+                    <div class="color-picker-group">
+                        <input type="color" id="fillColor" value="#000000" class="color-input">
+                        <span style="flex: 1; font-size: 0.9rem;" id="fillColorValue">#000000</span>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="sidebar-section-title">
+                    <i class="fas fa-info-circle"></i> Thông Tin Ảnh
+                </div>
+                <div class="property-group">
+                    <label class="property-label">Kích Thước</label>
+                    <span style="display: block; font-size: 0.9rem; color: #666;" id="imageSize">
+                        Chưa có ảnh
+                    </span>
+                </div>
+                <div class="property-group">
+                    <label class="property-label">Định Dạng</label>
+                    <span style="display: block; font-size: 0.9rem; color: #666;" id="imageFormat">
+                        Chưa có ảnh
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPLOAD MODAL -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="hideUploadModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">Tải Ảnh Lên</div>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" class="file-input" accept="image/*" 
+                       onchange="handleImageUpload(event)">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p style="margin: 0; font-size: 1rem;">Bấm để chọn hoặc kéo thả ảnh tại đây</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- INPAINT MODAL -->
+    <div class="modal-overlay" id="inpaintModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="hideInpaintModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">Sửa Vùng Ảnh (AI Inpainting)</div>
+            <div class="property-group">
+                <label class="property-label">Mô Tả Vùng Cần Sửa</label>
+                <textarea id="inpaintPrompt" class="property-input" rows="4" 
+                    placeholder="Ví dụ: bầu trời xanh, hoa hồng, mặt trời mọc..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="executeInpaint()">
+                    <i class="fas fa-check"></i> Thực Hiện
+                </button>
+                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="hideInpaintModal()">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADING SPINNER -->
+    <div class="loading" id="loadingSpinner">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Đang xử lý...</div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script>
+        // ===== GLOBAL STATE =====
+        let canvas = null;
+        let canvasHistory = [];
+        let historyStep = 0;
+        let currentZoom = 1;
+        const API_BASE_URL = 'http://localhost:8000/api'; // Thay bằng API của bạn
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Khởi tạo Canvas
+            const canvasElement = document.createElement('canvas');
+            canvasElement.id = 'canvas';
+            canvasElement.width = 800;
+            canvasElement.height = 600;
+            document.querySelector('.canvas-workspace').innerHTML = '';
+            document.querySelector('.canvas-workspace').appendChild(canvasElement);
+
+            canvas = new fabric.Canvas('canvas', {
+                backgroundColor: '#ffffff',
+                fireRightClick: true,
+                stopContextMenu: true,
+            });
+
+            // Setup drag and drop
+            setupDragAndDrop();
+            
+            // Initial history state
+            saveToHistory();
+
+            showToast('Sẵn sàng! Tải ảnh để bắt đầu', 'info');
+        });
+
+        // ===== UPLOAD FUNCTIONS =====
+        function showUploadModal() {
+            document.getElementById('uploadModal').classList.add('active');
+        }
+
+        function hideUploadModal() {
+            document.getElementById('uploadModal').classList.remove('active');
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fabric.Image.fromURL(e.target.result, function(img) {
+                    // Scale image to fit canvas
+                    const maxWidth = 800;
+                    const maxHeight = 600;
+                    const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+                    
+                    img.scale(scale);
+                    img.set({
+                        left: (canvas.width - img.width * scale) / 2,
+                        top: (canvas.height - img.height * scale) / 2,
+                    });
+
+                    canvas.clear();
+                    canvas.add(img);
+                    canvas.renderAll();
+
+                    // Update info
+                    updateImageInfo(file);
+                    saveToHistory();
+                    hideUploadModal();
+                    showToast('Ảnh đã được tải thành công', 'success');
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setupDragAndDrop() {
+            document.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            document.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const event = { target: { files: files } };
+                    handleImageUpload(event);
+                }
+            });
+        }
+
+        function updateImageInfo(file) {
+            const width = canvas.getWidth();
+            const height = canvas.getHeight();
+            document.getElementById('imageSize').textContent = `${width} × ${height} px`;
+            document.getElementById('imageFormat').textContent = file.type || 'image/unknown';
+        }
+
+        // ===== BASIC TOOLS =====
+        function addText() {
+            const text = new fabric.Text('Nhập text', {
+                left: canvas.width / 2,
+                top: canvas.height / 2,
+                fontSize: 24,
+                fill: '#000000',
+                originX: 'center',
+                originY: 'center',
+            });
+            canvas.add(text);
+            canvas.setActiveObject(text);
+            canvas.renderAll();
+            saveToHistory();
+            showToast('Đã thêm text', 'success');
+        }
+
+        function addShape() {
+            const shape = new fabric.Circle({
+                left: canvas.width / 2 - 50,
+                top: canvas.height / 2 - 50,
+                radius: 50,
+                fill: '#667eea',
+                stroke: '#764ba2',
+                strokeWidth: 2,
+                originX: 'center',
+                originY: 'center',
+            });
+            canvas.add(shape);
+            canvas.setActiveObject(shape);
+            canvas.renderAll();
+            saveToHistory();
+            showToast('Đã thêm hình dạng', 'success');
+        }
+
+        function cropImage() {
+            showToast('Chức năng crop sẽ được thêm vào', 'info');
+        }
+
+        function rotateImage() {
+            const obj = canvas.getActiveObject();
+            if (!obj) {
+                showToast('Vui lòng chọn đối tượng trước', 'error');
+                return;
+            }
+            obj.rotate((obj.angle || 0) + 15);
+            canvas.renderAll();
+            saveToHistory();
+            showToast('Đã xoay', 'success');
+        }
+
+        function flipImageHorizontal() {
+            const obj = canvas.getActiveObject();
+            if (!obj) {
+                showToast('Vui lòng chọn đối tượng trước', 'error');
+                return;
+            }
+            obj.flipX = !obj.flipX;
+            canvas.renderAll();
+            saveToHistory();
+            showToast('Đã lật', 'success');
+        }
+
+        // ===== AI FEATURES (PLACEHOLDERS) =====
+        function removeBackground() {
+            showLoading('Đang xoá nền...');
+            
+            // Placeholder - Sẽ thay thế bằng API thực
+            setTimeout(() => {
+                hideLoading();
+                showToast('API Xoá Nền chưa được kết nối. Vui lòng gắn API của bạn.', 'info');
+            }, 2000);
+        }
+
+        function showInpaintModal() {
+            document.getElementById('inpaintModal').classList.add('active');
+        }
+
+        function hideInpaintModal() {
+            document.getElementById('inpaintModal').classList.remove('active');
+        }
+
+        function executeInpaint() {
+            const prompt = document.getElementById('inpaintPrompt').value;
+            if (!prompt) {
+                showToast('Vui lòng nhập mô tả', 'error');
+                return;
+            }
+
+            showLoading('Đang sửa vùng ảnh với AI...');
+            hideInpaintModal();
+
+            // Placeholder - Sẽ thay thế bằng API thực
+            setTimeout(() => {
+                hideLoading();
+                showToast('API Inpainting chưa được kết nối. Vui lòng gắn API của bạn.', 'info');
+            }, 2000);
+        }
+
+        function upscaleImage() {
+            showLoading('Đang nâng cấp độ phân giải...');
+            
+            // Placeholder - Sẽ thay thế bằng API thực
+            setTimeout(() => {
+                hideLoading();
+                showToast('API Upscaling chưa được kết nối. Vui lòng gắn API của bạn.', 'info');
+            }, 2000);
+        }
+
+        function removeObject() {
+            showLoading('Đang xoá đối tượng...');
+            
+            // Placeholder - Sẽ thay thế bằng API thực
+            setTimeout(() => {
+                hideLoading();
+                showToast('API Xoá Đối Tượng chưa được kết nối. Vui lòng gắn API của bạn.', 'info');
+            }, 2000);
+        }
+
+        // ===== FILTERS =====
+        function applyFilter(filterType) {
+            const obj = canvas.getActiveObject();
+            if (!obj || !obj.isType('image')) {
+                showToast('Vui lòng chọn ảnh trước', 'error');
+                return;
+            }
+
+            switch(filterType) {
+                case 'grayscale':
+                    obj.filters = [new fabric.Image.filters.Grayscale()];
+                    break;
+                case 'sepia':
+                    obj.filters = [new fabric.Image.filters.Sepia()];
+                    break;
+                case 'blur':
+                    obj.filters = [new fabric.Image.filters.Blur()];
+                    break;
+                case 'saturate':
+                    obj.filters = [new fabric.Image.filters.Saturation({ saturation: 0.5 })];
+                    break;
+            }
+
+            obj.applyFilters();
+            canvas.renderAll();
+            saveToHistory();
+            showToast(`Đã áp dụng bộ lọc: ${filterType}`, 'success');
+        }
+
+        // ===== ADJUSTMENTS =====
+        function updateBrightness(value) {
+            const percent = (value / 100) * 100;
+            document.getElementById('brightnessValue').textContent = percent.toFixed(0) + '%';
+            
+            const obj = canvas.getActiveObject();
+            if (obj && obj.isType('image')) {
+                obj.filters = [new fabric.Image.filters.Brightness({ brightness: value / 100 })];
+                obj.applyFilters();
+                canvas.renderAll();
+            }
+        }
+
+        function updateContrast(value) {
+            const percent = (value / 100) * 100;
+            document.getElementById('contrastValue').textContent = percent.toFixed(0) + '%';
+            
+            const obj = canvas.getActiveObject();
+            if (obj && obj.isType('image')) {
+                obj.filters = [new fabric.Image.filters.Contrast({ contrast: value / 100 })];
+                obj.applyFilters();
+                canvas.renderAll();
+            }
+        }
+
+        function updateSaturation(value) {
+            const percent = (value / 100) * 100;
+            document.getElementById('saturationValue').textContent = percent.toFixed(0) + '%';
+            
+            const obj = canvas.getActiveObject();
+            if (obj && obj.isType('image')) {
+                obj.filters = [new fabric.Image.filters.Saturation({ saturation: value / 100 })];
+                obj.applyFilters();
+                canvas.renderAll();
+            }
+        }
+
+        // ===== ZOOM FUNCTIONS =====
+        function zoomIn() {
+            currentZoom += 0.1;
+            canvas.setZoom(currentZoom);
+            updateZoomLevel();
+        }
+
+        function zoomOut() {
+            currentZoom = Math.max(0.1, currentZoom - 0.1);
+            canvas.setZoom(currentZoom);
+            updateZoomLevel();
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            canvas.setZoom(currentZoom);
+            updateZoomLevel();
+        }
+
+        function updateZoomLevel() {
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        // ===== HISTORY =====
+        function saveToHistory() {
+            canvasHistory = canvasHistory.slice(0, historyStep);
+            canvasHistory.push(canvas.toJSON());
+            historyStep = canvasHistory.length - 1;
+        }
+
+        function undo() {
+            if (historyStep > 0) {
+                historyStep--;
+                canvas.loadFromJSON(canvasHistory[historyStep], () => {
+                    canvas.renderAll();
+                    showToast('Hoàn tác', 'success');
+                });
+            } else {
+                showToast('Không có gì để hoàn tác', 'info');
+            }
+        }
+
+        function redo() {
+            if (historyStep < canvasHistory.length - 1) {
+                historyStep++;
+                canvas.loadFromJSON(canvasHistory[historyStep], () => {
+                    canvas.renderAll();
+                    showToast('Làm lại', 'success');
+                });
+            } else {
+                showToast('Không có gì để làm lại', 'info');
+            }
+        }
+
+        function resetCanvas() {
+            if (confirm('Bạn có chắc muốn xoá tất cả?')) {
+                canvas.clear();
+                canvasHistory = [];
+                historyStep = 0;
+                saveToHistory();
+                showToast('Đã đặt lại', 'success');
+            }
+        }
+
+        // ===== DOWNLOAD =====
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'edited-image.png';
+            link.click();
+            showToast('Ảnh đã được tải xuống', 'success');
+        }
+
+        // ===== FULLSCREEN =====
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // ===== LOADING SPINNER =====
+        function showLoading(text = 'Đang xử lý...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingSpinner').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingSpinner').classList.remove('active');
+        }
+
+        // ===== TOAST NOTIFICATION =====
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Add slideOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                to {
+                    transform: translateX(110%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

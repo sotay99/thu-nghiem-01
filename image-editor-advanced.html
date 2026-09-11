@@ -1,0 +1,3988 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Editor Pro - Layer Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --layer-1-color: #000000;      /* Background - Black */
+            --layer-2-color: #FF6B6B;      /* Red */
+            --layer-3-color: #4ECDC4;      /* Teal */
+            --layer-4-color: #FFD93D;      /* Yellow */
+            --layer-5-color: #6BCB77;      /* Green */
+            --layer-6-color: #4D96FF;      /* Blue */
+            --layer-7-color: #9D84B7;      /* Purple */
+            --layer-8-color: #FF9F43;      /* Orange */
+            --current-layer-color: var(--layer-1-color);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-header {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-header:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 56px);
+            gap: 10px;
+            padding: 10px;
+        }
+
+        /* ===== SIDEBAR LEFT ===== */
+        .sidebar-left {
+            width: 260px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+
+        .tool-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--current-layer-color);
+            font-weight: 500;
+        }
+
+        .tool-btn:hover {
+            background: #e9ecef;
+            border-color: var(--current-layer-color);
+        }
+
+        .tool-btn.ai-feature {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-color: var(--current-layer-color);
+            color: var(--current-layer-color);
+        }
+
+        .tool-btn i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* ===== CANVAS AREA ===== */
+        .canvas-container {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .canvas-toolbar {
+            background: #f8f9fa;
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .canvas-toolbar-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--current-layer-color);
+        }
+
+        .canvas-toolbar-item:hover {
+            border-color: var(--current-layer-color);
+        }
+
+        .canvas-workspace {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f5f5f5;
+            position: relative;
+        }
+
+        #canvas {
+            max-width: 100%;
+            max-height: 100%;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .canvas-empty {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #999;
+            gap: 15px;
+        }
+
+        /* ===== SIDEBAR RIGHT ===== */
+        .sidebar-right {
+            width: 260px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .property-group {
+            margin-bottom: 15px;
+        }
+
+        .property-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* ===== LAYERS PANEL ===== */
+        .layers-panel {
+            flex: 1;
+            border-top: 1px solid #dee2e6;
+            padding-top: 15px;
+        }
+
+        .layers-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .layers-panel-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+
+        .layers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .layer-item.active {
+            background: #e9ecef;
+            border-color: var(--current-layer-color);
+        }
+
+        .layer-item:hover {
+            background: #e9ecef;
+        }
+
+        .layer-visibility {
+            width: 20px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--current-layer-color);
+            flex-shrink: 0;
+        }
+
+        .layer-color-indicator {
+            width: 8px;
+            height: 20px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .layer-name-input {
+            flex: 1;
+            background: white;
+            border: 1px solid #dee2e6;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .layer-controls {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .layer-btn {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .layer-btn:hover {
+            background: var(--current-layer-color);
+            color: white;
+            border-color: var(--current-layer-color);
+        }
+
+        /* ===== GROUP MODE BUTTON STYLES ===== */
+        .group-mode-btn {
+            color: #000000 !important;
+            border-color: #000000 !important;
+        }
+
+        .group-mode-btn:hover {
+            background: #000000 !important;
+            color: white !important;
+            border-color: #000000 !important;
+        }
+
+        /* ===== GROUP MODE INDICATOR ===== */
+        .group-mode-indicator {
+            display: none;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #000000;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .layer-item.active.group-selected .group-mode-indicator {
+            display: flex;
+        }
+
+        /* ===== MERGE LAYERS STYLES ===== */
+        .merge-layer-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .merge-layer-item:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .merge-layer-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .merge-layer-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .merge-layer-name {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* ===== RENAME STYLES ===== */
+        .rename-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+            margin-left: 5px;
+        }
+
+        .rename-btn:hover {
+            background: #764ba2;
+        }
+
+        /* ===== DROPDOWN MENU STYLES ===== */
+        .layer-dropdown-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 200px;
+            overflow: hidden;
+        }
+
+        .dropdown-menu-header {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #999;
+            font-size: 1.2rem;
+        }
+
+        .dropdown-close-btn:hover {
+            color: #333;
+        }
+
+        .dropdown-menu-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .dropdown-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-menu-item:hover {
+            background: #f0f0f0;
+        }
+
+        .dropdown-menu-item.danger {
+            color: #dc3545;
+        }
+
+        .dropdown-menu-item.danger:hover {
+            background: #fff5f5;
+        }
+
+        .dropdown-menu-item i {
+            width: 16px;
+            text-align: center;
+            color: var(--current-layer-color);
+        }
+
+        .dropdown-submenu {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .dropdown-submenu-item {
+            padding: 8px 16px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        .dropdown-submenu-item:hover {
+            background: #e9ecef;
+            padding-left: 20px;
+        }
+
+        /* ===== TREE VIEW STYLES ===== */
+        .layer-item-with-group {
+            padding-left: 0 !important;
+        }
+
+        .layer-tree-wrapper {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+        }
+
+        .layer-tree-expander {
+            min-width: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.9rem;
+            color: #667eea;
+            transition: all 0.2s;
+        }
+
+        .layer-tree-expander:hover {
+            color: #764ba2;
+        }
+
+        .layer-tree-expander.empty {
+            color: transparent;
+            cursor: default;
+        }
+
+        .layer-tree-content {
+            flex: 1;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .layer-item-indented {
+            margin-left: 0;
+            border-left: 2px solid #e0e0e0;
+            margin-bottom: 0;
+        }
+
+        .layer-item-nested {
+            background: #fafafa;
+        }
+
+        .group-children-container {
+            display: none;
+        }
+
+        .group-children-container.expanded {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .group-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ===== DRAG-AND-DROP STYLES ===== */
+        .layer-item.dragging {
+            opacity: 0.6;
+            background: #f0f0f0 !important;
+            border-style: dashed !important;
+        }
+
+        .layer-item.drag-over-before {
+            border-top: 3px solid #667eea;
+            padding-top: 5px;
+        }
+
+        .layer-item.drag-over-after {
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .layer-item.drag-over-inside {
+            background: #f0f7ff !important;
+            border: 2px solid #667eea !important;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: #999;
+            transition: all 0.2s;
+            padding: 4px 6px;
+            user-select: none;
+        }
+
+        .drag-handle:hover {
+            color: #667eea;
+            transform: scale(1.2);
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* ===== MULTI-SELECT STYLES ===== */
+        .layer-item.multi-selected {
+            background: #e8f4f8 !important;
+            border-left: 4px solid #667eea !important;
+            padding-left: 8px !important;
+        }
+
+        .layer-item.multi-selected::before {
+            content: '✓';
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .layer-item.active.multi-selected {
+            background: #d4e8f4 !important;
+            border-left: 4px solid #764ba2 !important;
+        }
+
+        .multi-select-badge {
+            display: none;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .layer-item.multi-selected .multi-select-badge {
+            display: flex;
+        }
+
+        /* ===== MULTI-SELECT CONTEXT MENU ===== */
+        .multi-select-menu {
+            display: none;
+            position: fixed;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1001;
+            min-width: 180px;
+            overflow: hidden;
+        }
+
+        .multi-select-menu.active {
+            display: block;
+        }
+
+        .multi-select-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s;
+        }
+
+        .multi-select-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .multi-select-menu-item:hover {
+            background: #f5f5f5;
+            color: #667eea;
+        }
+
+        .multi-select-menu-item.danger:hover {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .multi-select-menu-separator {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 5px 0;
+        }
+
+        /* ===== BLEND MODE & OPACITY PANEL ===== */
+        .blend-opacity-panel {
+            display: none;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            min-width: 280px;
+        }
+
+        .blend-opacity-panel.active {
+            display: block;
+        }
+
+        .panel-section {
+            margin-bottom: 15px;
+        }
+
+        .panel-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .panel-section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .blend-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .blend-mode-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .blend-mode-btn:hover {
+            background: #f5f5f5;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .blend-mode-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            font-weight: 600;
+        }
+
+        .opacity-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .opacity-slider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #ccc, #667eea);
+            outline: none;
+            border-radius: 3px;
+        }
+
+        .opacity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .opacity-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .opacity-value {
+            min-width: 45px;
+            padding: 6px 10px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .blend-opacity-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .blend-opacity-buttons button {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .blend-opacity-buttons button:hover {
+            background: #f5f5f5;
+            border-color: #667eea;
+        }
+
+        .blend-opacity-buttons button.success {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* ===== IMAGE INFO MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-header {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        /* ===== ADJUSTMENTS ===== */
+        .adjustments-section {
+            border-top: 1px solid #dee2e6;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .slider-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+
+        .slider-value {
+            min-width: 40px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--current-layer-color);
+            font-weight: 500;
+        }
+
+        /* ===== ADD LAYER BTN ===== */
+        .add-layer-btn {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            background: var(--current-layer-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .add-layer-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* ===== LAYER SELECTION BORDER ===== */
+        .canvas-layer-border {
+            position: absolute;
+            border: 2px solid var(--current-layer-color);
+            box-shadow: inset 0 0 0 4px white;
+            display: none;
+            pointer-events: none;
+        }
+
+        .canvas-layer-border.visible {
+            display: block;
+        }
+
+        .layer-control-btn {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: white;
+            border: 2px solid var(--current-layer-color);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: var(--current-layer-color);
+            transition: all 0.3s;
+            z-index: 999;
+        }
+
+        .layer-control-btn:hover {
+            background: var(--current-layer-color);
+            color: white;
+        }
+
+        .layer-corner-btn {
+            width: 32px;
+            height: 32px;
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--current-layer-color);
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* ===== LOADING & NOTIFICATIONS ===== */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2100;
+        }
+
+        .loading.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--current-layer-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 250px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--current-layer-color);
+            color: var(--current-layer-color);
+        }
+
+        .toast.error {
+            border-left: 4px solid #dc3545;
+            color: #dc3545;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ===== COLOR PICKER ===== */
+        .color-picker-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-input {
+            width: 50px;
+            height: 40px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            .sidebar-left,
+            .sidebar-right {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar-left,
+            .sidebar-right {
+                display: none;
+            }
+        }
+
+        .divider {
+            height: 1px;
+            background: #dee2e6;
+            margin: 10px 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <h1>
+            <i class="fas fa-wand-magic-sparkles"></i>
+            AI Image Editor Pro - Layers
+        </h1>
+        <div class="header-actions">
+            <button class="btn-header" onclick="showKeyboardShortcuts()" title="Xem phím tắt (?)">
+                <i class="fas fa-keyboard"></i> ⌨️
+            </button>
+            <button class="btn-header" onclick="showUploadModal()">
+                <i class="fas fa-upload"></i> Tải Ảnh
+            </button>
+            <button class="btn-header" onclick="downloadImage()">
+                <i class="fas fa-download"></i> Tải Xuống
+            </button>
+            <button class="btn-header" onclick="toggleFullscreen()">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        <!-- LEFT SIDEBAR -->
+        <div class="sidebar-left">
+            <!-- BASIC TOOLS -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-toolbox"></i> Công Cụ
+                </div>
+                <button class="tool-btn" onclick="addText()">
+                    <i class="fas fa-font"></i> Thêm Text
+                </button>
+                <button class="tool-btn" onclick="addShape()">
+                    <i class="fas fa-shapes"></i> Hình Dạng
+                </button>
+                <button class="tool-btn" onclick="cropImage()">
+                    <i class="fas fa-crop"></i> Cắt
+                </button>
+                <button class="tool-btn" onclick="rotateImage()">
+                    <i class="fas fa-rotate-right"></i> Xoay
+                </button>
+                <button class="tool-btn" onclick="flipImageHorizontal()">
+                    <i class="fas fa-arrows-alt-h"></i> Lật
+                </button>
+            </div>
+
+            <!-- AI FEATURES -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-brain"></i> AI Features
+                </div>
+                <button class="tool-btn ai-feature" onclick="removeBackground()">
+                    <i class="fas fa-eraser"></i> Xoá Nền
+                </button>
+                <button class="tool-btn ai-feature" onclick="showInpaintModal()">
+                    <i class="fas fa-paint-brush"></i> Sửa Vùng
+                </button>
+                <button class="tool-btn ai-feature" onclick="upscaleImage()">
+                    <i class="fas fa-arrow-up"></i> Nâng Cấp
+                </button>
+            </div>
+
+            <!-- FILTERS -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-filter"></i> Bộ Lọc
+                </div>
+                <button class="tool-btn" onclick="applyFilter('grayscale')">
+                    <i class="fas fa-image"></i> Đen Trắng
+                </button>
+                <button class="tool-btn" onclick="applyFilter('sepia')">
+                    <i class="fas fa-image"></i> Sepia
+                </button>
+                <button class="tool-btn" onclick="applyFilter('blur')">
+                    <i class="fas fa-image"></i> Mờ
+                </button>
+            </div>
+
+            <!-- HISTORY -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-history"></i> Lịch Sử
+                </div>
+                <button class="tool-btn" onclick="undo()">
+                    <i class="fas fa-undo"></i> Hoàn Tác
+                </button>
+                <button class="tool-btn" onclick="redo()">
+                    <i class="fas fa-redo"></i> Làm Lại
+                </button>
+            </div>
+        </div>
+
+        <!-- CANVAS AREA -->
+        <div class="canvas-container">
+            <div class="canvas-toolbar">
+                <span style="font-weight: 600; color: var(--current-layer-color);">Zoom:</span>
+                <button class="canvas-toolbar-item" onclick="zoomOut()">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <span class="canvas-toolbar-item" style="cursor: default; flex: 1; justify-content: center;">
+                    <span id="zoomLevel">100%</span>
+                </span>
+                <button class="canvas-toolbar-item" onclick="zoomIn()">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="canvas-toolbar-item" onclick="resetZoom()">
+                    <i class="fas fa-compress"></i> Phù Hợp
+                </button>
+            </div>
+            <div class="canvas-workspace">
+                <div class="canvas-empty">
+                    <i class="fas fa-image"></i>
+                    <p>Tải một ảnh để bắt đầu</p>
+                    <button class="btn-header" onclick="showUploadModal()">
+                        <i class="fas fa-upload"></i> Chọn Ảnh
+                    </button>
+                </div>
+            </div>
+            <div class="canvas-layer-border" id="layerBorder"></div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="sidebar-right">
+            <!-- ADJUSTMENTS -->
+            <div class="adjustments-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-sliders-h"></i> Điều Chỉnh
+                </div>
+
+                <div class="property-group">
+                    <label class="property-label">Độ Sáng</label>
+                    <div class="slider-container">
+                        <input type="range" id="brightness" min="0" max="200" value="100" 
+                               onchange="updateBrightness(this.value)">
+                        <span class="slider-value" id="brightnessValue">100%</span>
+                    </div>
+                </div>
+
+                <div class="property-group">
+                    <label class="property-label">Độ Tương Phản</label>
+                    <div class="slider-container">
+                        <input type="range" id="contrast" min="0" max="200" value="100" 
+                               onchange="updateContrast(this.value)">
+                        <span class="slider-value" id="contrastValue">100%</span>
+                    </div>
+                </div>
+
+                <div class="property-group">
+                    <label class="property-label">Bão Hòa</label>
+                    <div class="slider-container">
+                        <input type="range" id="saturation" min="0" max="200" value="100" 
+                               onchange="updateSaturation(this.value)">
+                        <span class="slider-value" id="saturationValue">100%</span>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="property-group">
+                    <label class="property-label">Màu Tô</label>
+                    <div class="color-picker-group">
+                        <input type="color" id="fillColor" value="#000000" class="color-input">
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <button class="btn-header" style="width: 100%; text-align: center;" onclick="showImageInfo()">
+                    <i class="fas fa-info-circle"></i> Thông Tin Ảnh
+                </button>
+            </div>
+
+            <!-- LAYERS PANEL -->
+            <div class="layers-panel">
+                <div class="layers-panel-header">
+                    <div class="layers-panel-title">
+                        <i class="fas fa-layer-group"></i> Layers
+                    </div>
+                    <button class="btn-header" onclick="toggleBlendOpacityPanel()" title="Blend & Opacity (🎨)">
+                        <i class="fas fa-palette"></i>
+                    </button>
+                </div>
+                <div class="layers-list" id="layersList">
+                    <!-- Layers will be added here -->
+                </div>
+                
+                <!-- BLEND MODE & OPACITY PANEL -->
+                <div class="blend-opacity-panel" id="blendOpacityPanel">
+                    <div class="panel-section">
+                        <div class="panel-section-title">🎨 Chế độ Hòa Trộn</div>
+                        <div class="blend-mode-grid" id="blendModeGrid">
+                            <!-- Blend modes will be generated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="panel-section">
+                        <div class="panel-section-title">👁️ Độ Mờ (Opacity)</div>
+                        <div class="opacity-control">
+                            <input type="range" class="opacity-slider" id="opacitySlider" 
+                                   min="0" max="100" value="100" 
+                                   oninput="updateOpacity(this.value)">
+                            <div class="opacity-value" id="opacityValue">100%</div>
+                        </div>
+                    </div>
+
+                    <div class="blend-opacity-buttons">
+                        <button onclick="resetBlendOpacity()">
+                            <i class="fas fa-redo"></i> Đặt Lại
+                        </button>
+                        <button onclick="applyBlendOpacity()" class="success">
+                            <i class="fas fa-check"></i> Áp Dụng
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 5px; margin-top: 10px;">
+                    <button class="add-layer-btn" style="flex: 1;" onclick="createNewLayer()">
+                        <i class="fas fa-plus"></i> Layer Mới
+                    </button>
+                    <button class="add-layer-btn" style="flex: 1; background: #667eea;" onclick="startMergeLayers()">
+                        <i class="fas fa-compress"></i> Gộp
+                    </button>
+                    <button class="add-layer-btn" style="flex: 1; background: #764ba2;" onclick="startGroupLayers()">
+                        <i class="fas fa-object-group"></i> Nhóm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMAGE INFO MODAL -->
+    <div class="modal-overlay" id="imageInfoModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="hideImageInfo()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">Thông Tin Ảnh</div>
+            <div class="info-row">
+                <span class="info-label">Kích Thước:</span>
+                <span class="info-value" id="modalImageSize">Chưa có ảnh</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Định Dạng:</span>
+                <span class="info-value" id="modalImageFormat">Chưa có ảnh</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Số Layers:</span>
+                <span class="info-value" id="layerCount">0</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Layer Hiện Tại:</span>
+                <span class="info-value" id="currentLayerInfo">Không có</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPLOAD MODAL -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="hideUploadModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">Tải Ảnh Lên</div>
+            <div style="border: 2px dashed var(--current-layer-color); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; background: #f8f9ff;" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" style="display: none;" accept="image/*" 
+                       onchange="handleImageUpload(event)">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--current-layer-color); margin-bottom: 10px; display: block;"></i>
+                <p style="margin: 0; font-size: 1rem;">Bấm để chọn hoặc kéo thả ảnh tại đây</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- GROUP LAYERS MODAL -->
+    <div class="modal-overlay" id="groupModal">
+        <div class="modal-content" style="max-width: 450px;">
+            <button class="modal-close" onclick="hideGroupModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">Nhóm Lớp</div>
+            
+            <div class="property-group" id="groupStatusMessage" style="background: #fff3cd; padding: 10px; border-radius: 6px; border-left: 4px solid #ffc107; margin-bottom: 15px; display: none;">
+                <p style="margin: 0; color: #856404; font-size: 0.9rem;">
+                    ⚠️ Vui lòng tích chọn các lớp trước khi nhóm
+                </p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <label class="property-label" style="margin: 0;">Chọn Lớp Cần Nhóm</label>
+                <button style="background: #764ba2; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;" onclick="selectAllLayersForGroup()">
+                    ☑️ Tất Cả
+                </button>
+            </div>
+
+            <div id="groupLayersList" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 10px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; background: #f8f9fa;">
+                <!-- Layers checkboxes will be added here -->
+            </div>
+
+            <div class="property-group">
+                <label class="property-label">Tên Nhóm</label>
+                <input type="text" id="groupNameInput" class="property-input" placeholder="Ví dụ: Effects, Text Elements...">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-header" style="flex: 1; padding: 10px; background: #764ba2;" onclick="executeGroupLayers()">
+                    <i class="fas fa-check"></i> Bắt Đầu Nhóm
+                </button>
+                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="hideGroupModal()">
+                    <i class="fas fa-times"></i> Hủy Nhóm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MERGE LAYERS MODAL -->
+    <div class="modal-overlay" id="mergeModal">
+        <div class="modal-content" style="max-width: 450px;">
+            <button class="modal-close" onclick="hideMergeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">Gộp Lớp</div>
+            
+            <div class="property-group" id="mergeStatusMessage" style="background: #fff3cd; padding: 10px; border-radius: 6px; border-left: 4px solid #ffc107; margin-bottom: 15px; display: none;">
+                <p style="margin: 0; color: #856404; font-size: 0.9rem;">
+                    ⚠️ Vui lòng tích chọn các lớp trước khi gộp
+                </p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <label class="property-label" style="margin: 0;">Chọn Lớp Cần Gộp</label>
+                <button style="background: #667eea; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;" onclick="selectAllLayersForMerge()">
+                    ☑️ Tất Cả
+                </button>
+            </div>
+
+            <div id="mergeLayersList" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 10px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; background: #f8f9fa;">
+                <!-- Layers checkboxes will be added here -->
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-header" style="flex: 1; padding: 10px; background: #28a745;" onclick="executeMergeLayers()">
+                    <i class="fas fa-check"></i> Bắt Đầu Gộp
+                </button>
+                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="hideMergeModal()">
+                    <i class="fas fa-times"></i> Hủy Gộp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MULTI-SELECT CONTEXT MENU -->
+    <div class="multi-select-menu" id="multiSelectMenu">
+        <div class="multi-select-menu-item" onclick="event.stopPropagation(); showMultiSelected(); closeMultiSelectMenu()">
+            <i class="fas fa-eye"></i> Hiển Thị
+        </div>
+        <div class="multi-select-menu-item" onclick="event.stopPropagation(); hideMultiSelected(); closeMultiSelectMenu()">
+            <i class="fas fa-eye-slash"></i> Ẩn
+        </div>
+        <div class="multi-select-menu-item" onclick="event.stopPropagation(); duplicateMultiSelected(); closeMultiSelectMenu()">
+            <i class="fas fa-copy"></i> Nhân Đôi
+        </div>
+        <div class="multi-select-menu-item" onclick="event.stopPropagation(); groupMultiSelected(); closeMultiSelectMenu()">
+            <i class="fas fa-folder-plus"></i> Tạo Nhóm
+        </div>
+        <div class="multi-select-menu-separator"></div>
+        <div class="multi-select-menu-item" onclick="event.stopPropagation(); clearMultiSelection(); closeMultiSelectMenu()">
+            <i class="fas fa-times"></i> Bỏ Chọn
+        </div>
+        <div class="multi-select-menu-item danger" onclick="event.stopPropagation(); deleteMultiSelected(); closeMultiSelectMenu()">
+            <i class="fas fa-trash"></i> Xoá
+        </div>
+    </div>
+
+    <!-- KEYBOARD SHORTCUTS MODAL -->
+    <div class="modal-overlay" id="shortcutsModal">
+        <div class="modal-content" style="max-width: 550px; max-height: 80vh; overflow-y: auto;">
+            <button class="modal-close" onclick="hideKeyboardShortcuts()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">⌨️ Keyboard Shortcuts</div>
+            
+            <div style="padding: 15px;">
+                <h4 style="margin-top: 0; color: #667eea;">Layer Management</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>↑ / ↓</kbd></td>
+                        <td style="padding: 8px;">Select layer above/below</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>D</kbd></td>
+                        <td style="padding: 8px;">Duplicate layer</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>R</kbd></td>
+                        <td style="padding: 8px;">Rename layer</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>H</kbd></td>
+                        <td style="padding: 8px;">Toggle visibility (hide/show)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Delete</kbd></td>
+                        <td style="padding: 8px;">Delete selected layer</td>
+                    </tr>
+                </table>
+
+                <h4 style="margin-top: 15px; color: #667eea;">Groups</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>← / →</kbd></td>
+                        <td style="padding: 8px;">Collapse/Expand group</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Ctrl+G</kbd></td>
+                        <td style="padding: 8px;">Create group</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Ctrl+M</kbd></td>
+                        <td style="padding: 8px;">Merge layers</td>
+                    </tr>
+                </table>
+
+                <h4 style="margin-top: 15px; color: #667eea;">Editing</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Ctrl+N</kbd></td>
+                        <td style="padding: 8px;">New layer</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Ctrl+S</kbd></td>
+                        <td style="padding: 8px;">Save/Download image</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Ctrl+Z</kbd></td>
+                        <td style="padding: 8px;">Undo (partial support)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Ctrl+Y</kbd></td>
+                        <td style="padding: 8px;">Redo (partial support)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Ctrl+Shift+↑</kbd></td>
+                        <td style="padding: 8px;">Move layer up</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Ctrl+Shift+↓</kbd></td>
+                        <td style="padding: 8px;">Move layer down</td>
+                    </tr>
+                </table>
+
+                <h4 style="margin-top: 15px; color: #667eea;">Modals</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Enter</kbd></td>
+                        <td style="padding: 8px;">Confirm (in rename modal)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-family: monospace; color: #666;"><kbd>Escape</kbd></td>
+                        <td style="padding: 8px;">Close modal</td>
+                    </tr>
+                </table>
+
+                <div style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 10px; margin-top: 15px; border-radius: 4px; font-size: 0.85rem; color: #333;">
+                    <strong>💡 Tips:</strong>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                        <li>Shortcuts work when no modal is open</li>
+                        <li>Don't trigger shortcuts while typing in inputs</li>
+                        <li>Ctrl = Windows/Linux, Cmd = Mac</li>
+                        <li>Press <kbd>?</kbd> to show this help again</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RENAME LAYER MODAL -->
+    <div class="modal-overlay" id="renameModal">
+        <div class="modal-content" style="max-width: 350px;">
+            <button class="modal-close" onclick="hideRenameModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">Đổi Tên Lớp</div>
+            
+            <div class="property-group">
+                <label class="property-label">Tên Lớp Mới</label>
+                <input type="text" id="renameInput" class="property-input" placeholder="Nhập tên mới...">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-header" style="flex: 1; padding: 10px; background: #667eea;" onclick="confirmRenameLayer()">
+                    <i class="fas fa-check"></i> Xác Nhận
+                </button>
+                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="hideRenameModal()">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INPAINT MODAL -->
+    <div class="modal-overlay" id="inpaintModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="hideInpaintModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">Sửa Vùng (AI Inpainting)</div>
+            <div class="property-group">
+                <label class="property-label">Mô Tả Vùng Cần Sửa</label>
+                <textarea id="inpaintPrompt" class="property-input" rows="4" 
+                    placeholder="Ví dụ: bầu trời xanh, hoa hồng..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="executeInpaint()">
+                    <i class="fas fa-check"></i> Thực Hiện
+                </button>
+                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="hideInpaintModal()">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADING SPINNER -->
+    <div class="loading" id="loadingSpinner">
+        <div class="spinner"></div>
+        <div style="color: var(--current-layer-color); font-weight: 500;" id="loadingText">Đang xử lý...</div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script>
+        // ===== GLOBAL STATE =====
+        let canvas = null;
+        let layers = [];
+        let layerGroups = []; // Array of group objects
+        let activeLayerIndex = 0;
+        let activeGroupIndex = -1; // -1 means no group selected
+        let selectedLayerIndices = new Set(); // For multi-select within group
+        let multiSelectedIndices = new Set(); // NEW: For Ctrl+Click multi-select
+        let currentZoom = 1;
+        let currentGroupRenameId = null; // For group rename modal
+        const API_BASE_URL = 'http://localhost:8000/api';
+
+        // Layer color palette
+        const LAYER_COLORS = [
+            '#000000', // Black
+            '#FF6B6B', // Red
+            '#4ECDC4', // Teal
+            '#FFD93D', // Yellow
+            '#6BCB77', // Green
+            '#4D96FF', // Blue
+            '#9D84B7', // Purple
+            '#FF9F43'  // Orange
+        ];
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvasElement = document.createElement('canvas');
+            canvasElement.id = 'canvas';
+            canvasElement.width = 800;
+            canvasElement.height = 600;
+            document.querySelector('.canvas-workspace').innerHTML = '';
+            document.querySelector('.canvas-workspace').appendChild(canvasElement);
+
+            canvas = new fabric.Canvas('canvas', {
+                backgroundColor: '#ffffff',
+                fireRightClick: true,
+                stopContextMenu: true,
+            });
+
+            setupDragAndDrop();
+            
+            // Create initial background layer
+            createBackgroundLayer();
+            showToast('Sẵn sàng! Tải ảnh để bắt đầu', 'success');
+        });
+
+        // ===== LAYER MANAGEMENT =====
+        function createBackgroundLayer() {
+            const layer = {
+                id: Date.now(),
+                name: 'Background',
+                color: LAYER_COLORS[0],
+                visible: true,
+                objects: [],
+                opacity: 1
+            };
+            layers.push(layer);
+            activeLayerIndex = 0;
+            updateLayersUI();
+            updateCurrentLayerColor();
+        }
+
+        function createNewLayer(fromInpaint = false) {
+            const layerNumber = layers.length;
+            const colorIndex = layerNumber % LAYER_COLORS.length;
+            
+            const layer = {
+                id: Date.now(),
+                name: `Lớp ${layerNumber}`,
+                color: LAYER_COLORS[colorIndex],
+                visible: true,
+                objects: [],
+                opacity: 1,
+                blendMode: 'normal',  // NEW: Blend mode
+                fromInpaint: fromInpaint
+            };
+            layers.push(layer);
+            activeLayerIndex = layers.length - 1;
+            updateLayersUI();
+            updateCurrentLayerColor();
+            showToast(`Tạo layer mới: ${layer.name}`, 'success');
+        }
+
+        function selectLayer(index, ctrlKey = false, shiftKey = false) {
+            if (index >= 0 && index < layers.length) {
+                const layer = layers[index];
+                
+                // Handle range select (Shift+Click)
+                if (shiftKey && multiSelectedIndices.size > 0) {
+                    const selectedArray = Array.from(multiSelectedIndices).sort((a, b) => a - b);
+                    const minIndex = Math.min(...selectedArray, index);
+                    const maxIndex = Math.max(...selectedArray, index);
+                    
+                    // Clear and select range
+                    multiSelectedIndices.clear();
+                    for (let i = minIndex; i <= maxIndex; i++) {
+                        multiSelectedIndices.add(i);
+                    }
+                    
+                    activeLayerIndex = index;
+                    updateLayersUI();
+                    updateCurrentLayerColor();
+                    showToast(`✓ Đã chọn từ lớp ${minIndex} đến ${maxIndex} (${multiSelectedIndices.size} lớp)`, 'info');
+                    return;
+                }
+                
+                // Handle multi-select (Ctrl+Click)
+                if (ctrlKey) {
+                    if (multiSelectedIndices.has(index)) {
+                        // Deselect
+                        multiSelectedIndices.delete(index);
+                        showToast(`⊘ Bỏ chọn: ${layer.name}`, 'info');
+                    } else {
+                        // Add to selection
+                        multiSelectedIndices.add(index);
+                        showToast(`✓ Thêm chọn: ${layer.name}`, 'info');
+                    }
+                    
+                    // Keep track of primary selection
+                    activeLayerIndex = index;
+                    updateLayersUI();
+                    updateCurrentLayerColor();
+                    return;
+                }
+                
+                // Normal single selection (no Ctrl, no Shift)
+                multiSelectedIndices.clear(); // Clear multi-select
+                activeLayerIndex = index;
+                
+                // If selecting a group, mark it as active group
+                if (layer.isGroup) {
+                    const group = layerGroups.find(g => g.id === layer.groupId);
+                    if (group) {
+                        activeGroupIndex = layerGroups.indexOf(group);
+                        selectedLayerIndices.clear(); // Clear multi-select
+                        updateLayersUI();
+                        updateCurrentLayerColor();
+                        showToast(`📁 Chọn Nhóm: ${layer.name}`, 'success');
+                    }
+                } else {
+                    // Regular layer selection
+                    activeGroupIndex = -1; // No group selected
+                    selectedLayerIndices.clear(); // Clear multi-select
+                    updateLayersUI();
+                    updateCurrentLayerColor();
+                    showToast(`Chọn: ${layer.name}`, 'success');
+                }
+            }
+        }
+
+        function deleteLayer(index) {
+            if (layers.length <= 1) {
+                showToast('Không thể xoá layer cuối cùng!', 'error');
+                return;
+            }
+            if (confirm(`Xoá layer "${layers[index].name}"?`)) {
+                layers.splice(index, 1);
+                if (activeLayerIndex >= layers.length) {
+                    activeLayerIndex = layers.length - 1;
+                }
+                updateLayersUI();
+                updateCurrentLayerColor();
+                showToast('Đã xoá layer', 'success');
+            }
+        }
+
+        function duplicateLayer(index) {
+            const original = layers[index];
+            const duplicate = {
+                ...original,
+                id: Date.now(),
+                name: `${original.name} (Bản Sao)`,
+                objects: [...original.objects]
+            };
+            layers.splice(index + 1, 0, duplicate);
+            activeLayerIndex = index + 1;
+            updateLayersUI();
+            updateCurrentLayerColor();
+            showToast(`Nhân đôi: ${duplicate.name}`, 'success');
+        }
+
+        function renameLayer(index, newName) {
+            if (newName.trim()) {
+                layers[index].name = newName;
+                updateLayersUI();
+                updateCurrentLayerColor();
+            }
+        }
+
+        // ===== MERGE LAYERS FUNCTIONALITY =====
+        let layersToMerge = new Set();
+        let currentRenameIndex = -1;
+
+        function startMergeLayers() {
+            layersToMerge.clear();
+            document.getElementById('mergeStatusMessage').style.display = 'block';
+            document.getElementById('mergeLayersList').innerHTML = '';
+            
+            layers.forEach((layer, index) => {
+                const item = document.createElement('div');
+                item.className = 'merge-layer-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="merge-${index}" value="${index}" 
+                           onchange="toggleMergeLayer(${index})">
+                    <div class="merge-layer-indicator" style="background: ${layer.color};"></div>
+                    <label for="merge-${index}" class="merge-layer-name">${layer.name}</label>
+                `;
+                document.getElementById('mergeLayersList').appendChild(item);
+            });
+            
+            document.getElementById('mergeModal').classList.add('active');
+        }
+
+        function hideMergeModal() {
+            document.getElementById('mergeModal').classList.remove('active');
+            layersToMerge.clear();
+        }
+
+        function toggleMergeLayer(index) {
+            const checkbox = document.getElementById(`merge-${index}`);
+            if (checkbox.checked) {
+                layersToMerge.add(index);
+                document.getElementById('mergeStatusMessage').style.display = 'none';
+            } else {
+                layersToMerge.delete(index);
+                if (layersToMerge.size === 0) {
+                    document.getElementById('mergeStatusMessage').style.display = 'block';
+                }
+            }
+        }
+
+        function selectAllLayersForMerge() {
+            const checkboxes = document.querySelectorAll('#mergeLayersList input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.checked = !allChecked;
+                if (!allChecked) {
+                    layersToMerge.add(index);
+                } else {
+                    layersToMerge.delete(index);
+                }
+            });
+            
+            if (layersToMerge.size === 0) {
+                document.getElementById('mergeStatusMessage').style.display = 'block';
+            } else {
+                document.getElementById('mergeStatusMessage').style.display = 'none';
+            }
+        }
+
+        function executeMergeLayers() {
+            if (layersToMerge.size < 2) {
+                showToast('❌ Vui lòng chọn ít nhất 2 lớp để gộp!', 'error');
+                return;
+            }
+
+            const indicesToMerge = Array.from(layersToMerge).sort((a, b) => b - a);
+            const mergedObjects = [];
+            const mergedNames = [];
+            const baseIndex = Math.min(...indicesToMerge);
+            
+            // Collect all objects from selected layers
+            indicesToMerge.forEach(index => {
+                mergedObjects.push(...layers[index].objects);
+                mergedNames.push(layers[index].name);
+            });
+            
+            // Remove layers (from highest index first to avoid index shift)
+            indicesToMerge.forEach(index => {
+                if (index !== baseIndex) {
+                    layers.splice(index, 1);
+                }
+            });
+            
+            // Create merged layer name
+            const mergedLayerName = 'Layer gộp ' + mergedNames.join(', ');
+            
+            // Auto assign color to merged layer (cycle through palette)
+            const mergedColorIndex = layers.length % LAYER_COLORS.length;
+            const mergedColor = LAYER_COLORS[mergedColorIndex];
+            
+            // Add merged objects to base layer
+            layers[baseIndex].objects = mergedObjects;
+            layers[baseIndex].name = mergedLayerName;
+            layers[baseIndex].color = mergedColor; // Set new color
+            
+            layersToMerge.clear();
+            updateLayersUI();
+            updateCurrentLayerColor();
+            renderAllLayers();
+            hideMergeModal();
+            
+            showToast(`✅ Gộp thành công! Layer mới: "${mergedLayerName}" (${mergedColor})`, 'success');
+        }
+
+        // ===== RENAME LAYER MODAL =====
+        function openRenameModal(index) {
+            currentRenameIndex = index;
+            document.getElementById('renameInput').value = layers[index].name;
+            document.getElementById('renameModal').classList.add('active');
+            setTimeout(() => document.getElementById('renameInput').focus(), 100);
+        }
+
+        function hideRenameModal() {
+            document.getElementById('renameModal').classList.remove('active');
+            currentRenameIndex = -1;
+        }
+
+        function confirmRenameLayer() {
+            if (window.currentGroupRenameId) {
+                // Rename group
+                const newName = document.getElementById('renameInput').value.trim();
+                if (newName) {
+                    renameGroup(window.currentGroupRenameId, newName);
+                    hideRenameModal();
+                    showToast(`✏️ Đổi tên nhóm thành: "${newName}"`, 'success');
+                } else {
+                    showToast('❌ Vui lòng nhập tên!', 'error');
+                }
+                window.currentGroupRenameId = null;
+            } else if (currentRenameIndex >= 0) {
+                // Rename regular layer
+                const newName = document.getElementById('renameInput').value.trim();
+                if (newName) {
+                    renameLayer(currentRenameIndex, newName);
+                    hideRenameModal();
+                    showToast(`✏️ Đổi tên thành: "${newName}"`, 'success');
+                } else {
+                    showToast('❌ Vui lòng nhập tên lớp!', 'error');
+                }
+            }
+        }
+
+        function openGroupMenu(layerIndex, groupId) {
+            alert(`Tùy chọn nhóm:\n1. Đổi tên\n2. Bỏ nhóm\n(Tính năng menu thả xuống sắp ra mắt)\n\nBỏ nhóm ngay: ${confirm('Bỏ nhóm này?') ? ungroupLayers(groupId) : 'Hủy'}`);
+        }
+
+        // Support Enter key in rename modal
+        // ===== KEYBOARD SHORTCUTS =====
+        document.addEventListener('keydown', function(e) {
+            // Don't trigger shortcuts while typing in input fields
+            const isInputActive = document.activeElement.tagName === 'INPUT' || 
+                                 document.activeElement.tagName === 'TEXTAREA';
+            
+            // Modal checks
+            const renameModalActive = document.getElementById('renameModal')?.classList.contains('active');
+            const mergeModalActive = document.getElementById('mergeModal')?.classList.contains('active');
+            const groupModalActive = document.getElementById('groupModal')?.classList.contains('active');
+            const inpaintModalActive = document.getElementById('inpaintModal')?.classList.contains('active');
+            
+            // Handle modal shortcuts
+            if (renameModalActive) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    confirmRenameLayer();
+                    return;
+                }
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideRenameModal();
+                    return;
+                }
+            }
+            
+            if (mergeModalActive) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideMergeModal();
+                    return;
+                }
+            }
+            
+            if (groupModalActive) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideGroupModal();
+                    return;
+                }
+            }
+            
+            if (inpaintModalActive) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideInpaintModal();
+                    return;
+                }
+            }
+            
+            // Global shortcuts (no modal active, not typing in input)
+            if (!isInputActive && !renameModalActive && !mergeModalActive && !groupModalActive && !inpaintModalActive) {
+                // Ctrl/Cmd + Z: Undo
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                    e.preventDefault();
+                    showToast('↶ Undo chưa được hỗ trợ đầy đủ', 'info');
+                    return;
+                }
+                
+                // Ctrl/Cmd + Y: Redo
+                if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                    e.preventDefault();
+                    showToast('↷ Redo chưa được hỗ trợ đầy đủ', 'info');
+                    return;
+                }
+                
+                // Ctrl/Cmd + S: Download/Save
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    downloadImage();
+                    return;
+                }
+                
+                // Ctrl/Cmd + N: New Layer
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                    e.preventDefault();
+                    createNewLayer();
+                    return;
+                }
+                
+                // Ctrl/Cmd + G: Group Layers
+                if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+                    e.preventDefault();
+                    startGroupLayers();
+                    return;
+                }
+                
+                // Ctrl/Cmd + M: Merge Layers
+                if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+                    e.preventDefault();
+                    startMergeLayers();
+                    return;
+                }
+                
+                // Ctrl/Cmd + Shift + Up: Move Layer Up
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    moveLayerUp(activeLayerIndex);
+                    return;
+                }
+                
+                // Ctrl/Cmd + Shift + Down: Move Layer Down
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    moveLayerDown(activeLayerIndex);
+                    return;
+                }
+                
+                // Delete: Remove selected layer
+                if (e.key === 'Delete' || e.key === 'Backspace') {
+                    e.preventDefault();
+                    deleteLayer(activeLayerIndex);
+                    return;
+                }
+                
+                // D: Duplicate layer
+                if (e.key === 'd' || e.key === 'D') {
+                    e.preventDefault();
+                    duplicateLayer(activeLayerIndex);
+                    return;
+                }
+                
+                // R: Rename layer (open rename modal)
+                if (e.key === 'r' || e.key === 'R') {
+                    e.preventDefault();
+                    openRenameModal(activeLayerIndex);
+                    return;
+                }
+                
+                // H: Toggle visibility/Hide
+                if (e.key === 'h' || e.key === 'H') {
+                    e.preventDefault();
+                    toggleLayerVisibility(activeLayerIndex);
+                    return;
+                }
+                
+                // Up Arrow: Select layer above
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (activeLayerIndex < layers.length - 1) {
+                        selectLayer(activeLayerIndex + 1);
+                    }
+                    return;
+                }
+                
+                // Down Arrow: Select layer below
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (activeLayerIndex > 0) {
+                        selectLayer(activeLayerIndex - 1);
+                    }
+                    return;
+                }
+                
+                // Right Arrow: Expand group
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const layer = layers[activeLayerIndex];
+                    if (layer.isGroup) {
+                        const group = layerGroups.find(g => g.id === layer.groupId);
+                        if (group && group.collapsed) {
+                            toggleGroupExpanded(layer.groupId);
+                        }
+                    }
+                    return;
+                }
+                
+                // Left Arrow: Collapse group
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const layer = layers[activeLayerIndex];
+                    if (layer.isGroup) {
+                        const group = layerGroups.find(g => g.id === layer.groupId);
+                        if (group && !group.collapsed) {
+                            toggleGroupExpanded(layer.groupId);
+                        }
+                    }
+                    return;
+                }
+                
+                // Ctrl/Cmd + D: Deselect (select background/first layer)
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
+                    e.preventDefault();
+                    selectLayer(layers.length - 1); // Background
+                    return;
+                }
+                
+                // ?: Show help/shortcuts
+                if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+                    e.preventDefault();
+                    showKeyboardShortcuts();
+                    return;
+                }
+                
+                // Ctrl+A: Select all visible layers
+                if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                    e.preventDefault();
+                    layers.forEach((_, index) => {
+                        multiSelectedIndices.add(index);
+                    });
+                    updateLayersUI();
+                    showToast(`✓ Đã chọn tất cả ${layers.length} lớp!`, 'success');
+                    return;
+                }
+                
+                // Escape: Clear multi-selection
+                if (e.key === 'Escape' && multiSelectedIndices.size > 0) {
+                    e.preventDefault();
+                    multiSelectedIndices.clear();
+                    updateLayersUI();
+                    showToast('🔄 Bỏ chọn tất cả', 'info');
+                    return;
+                }
+            }
+        });
+
+        // ===== LAYER GROUPS FUNCTIONALITY =====
+        let layersToGroup = new Set();
+
+        function startGroupLayers() {
+            layersToGroup.clear();
+            document.getElementById('groupStatusMessage').style.display = 'block';
+            document.getElementById('groupLayersList').innerHTML = '';
+            document.getElementById('groupNameInput').value = '';
+            
+            layers.forEach((layer, index) => {
+                const item = document.createElement('div');
+                item.className = 'merge-layer-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="group-${index}" value="${index}" 
+                           onchange="toggleGroupLayer(${index})">
+                    <div class="merge-layer-indicator" style="background: ${layer.color};"></div>
+                    <label for="group-${index}" class="merge-layer-name">${layer.name}</label>
+                `;
+                document.getElementById('groupLayersList').appendChild(item);
+            });
+            
+            document.getElementById('groupModal').classList.add('active');
+        }
+
+        function hideGroupModal() {
+            document.getElementById('groupModal').classList.remove('active');
+            layersToGroup.clear();
+        }
+
+        function toggleGroupLayer(index) {
+            const checkbox = document.getElementById(`group-${index}`);
+            if (checkbox.checked) {
+                layersToGroup.add(index);
+                document.getElementById('groupStatusMessage').style.display = 'none';
+            } else {
+                layersToGroup.delete(index);
+                if (layersToGroup.size === 0) {
+                    document.getElementById('groupStatusMessage').style.display = 'block';
+                }
+            }
+        }
+
+        function selectAllLayersForGroup() {
+            const checkboxes = document.querySelectorAll('#groupLayersList input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.checked = !allChecked;
+                if (!allChecked) {
+                    layersToGroup.add(index);
+                } else {
+                    layersToGroup.delete(index);
+                }
+            });
+            
+            if (layersToGroup.size === 0) {
+                document.getElementById('groupStatusMessage').style.display = 'block';
+            } else {
+                document.getElementById('groupStatusMessage').style.display = 'none';
+            }
+        }
+
+        function executeGroupLayers() {
+            if (layersToGroup.size < 1) {
+                showToast('❌ Vui lòng chọn ít nhất 1 lớp để nhóm!', 'error');
+                return;
+            }
+
+            const groupName = document.getElementById('groupNameInput').value.trim() || 'Nhóm mới';
+            const indicesToGroup = Array.from(layersToGroup).sort((a, b) => a - b);
+            const groupedLayers = [];
+            
+            // Collect layers to group
+            indicesToGroup.forEach(index => {
+                groupedLayers.push(layers[index]);
+            });
+            
+            // Create group object
+            const newGroup = {
+                id: Date.now(),
+                name: groupName,
+                color: '#000000', // Group name is always black
+                visible: true,
+                children: groupedLayers,
+                isGroup: true,
+                collapsed: false
+            };
+            
+            // Add group to layerGroups array
+            layerGroups.push(newGroup);
+            
+            // Remove original layers (from highest index first)
+            indicesToGroup.reverse().forEach(index => {
+                layers.splice(index, 1);
+            });
+            
+            // Add group reference to layers (as a special layer)
+            layers.push({
+                id: newGroup.id,
+                name: groupName,
+                color: '#000000',
+                visible: true,
+                isGroup: true,
+                groupId: newGroup.id
+            });
+            
+            layersToGroup.clear();
+            updateLayersUI();
+            updateCurrentLayerColor();
+            renderAllLayers();
+            hideGroupModal();
+            
+            showToast(`✅ Nhóm lớp thành công! Nhóm: "${groupName}"`, 'success');
+        }
+
+        function ungroupLayers(groupId) {
+            const groupIndex = layerGroups.findIndex(g => g.id === groupId);
+            if (groupIndex === -1) return;
+            
+            const group = layerGroups[groupIndex];
+            const groupLayerIndex = layers.findIndex(l => l.isGroup && l.groupId === groupId);
+            
+            // Remove group from layers array
+            if (groupLayerIndex !== -1) {
+                layers.splice(groupLayerIndex, 1);
+            }
+            
+            // Add group children back to layers array at the same position
+            group.children.forEach((child, i) => {
+                layers.splice(groupLayerIndex + i, 0, child);
+            });
+            
+            // Remove from groups array
+            layerGroups.splice(groupIndex, 1);
+            
+            updateLayersUI();
+            updateCurrentLayerColor();
+            renderAllLayers();
+            showToast(`✅ Bỏ nhóm thành công! "${group.name}" đã được mở ra`, 'success');
+        }
+
+        function renameGroup(groupId, newName) {
+            const group = layerGroups.find(g => g.id === groupId);
+            if (group && newName.trim()) {
+                group.name = newName.trim();
+                const groupLayer = layers.find(l => l.isGroup && l.groupId === groupId);
+                if (groupLayer) {
+                    groupLayer.name = newName.trim();
+                }
+                updateLayersUI();
+            }
+        }
+
+        // ===== DROPDOWN MENU FUNCTIONS =====
+        let currentOpenMenu = null;
+
+        function closeAllMenus() {
+            if (currentOpenMenu) {
+                currentOpenMenu.remove();
+                currentOpenMenu = null;
+            }
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.layer-item') && !e.target.closest('.layer-dropdown-menu')) {
+                closeAllMenus();
+            }
+        });
+
+        function showLayerMenu(layerIndex, event) {
+            closeAllMenus();
+            event.stopPropagation();
+            
+            const layer = layers[layerIndex];
+            const layerItem = event.currentTarget.closest('.layer-item');
+            const rect = layerItem.getBoundingClientRect();
+            
+            const menu = document.createElement('div');
+            menu.className = 'layer-dropdown-menu';
+            menu.style.left = '0';
+            menu.style.top = event.currentTarget.offsetHeight + 'px';
+            
+            let menuHTML = `
+                <div class="dropdown-menu-header">
+                    Menu Lớp
+                    <button class="dropdown-close-btn" onclick="event.stopPropagation(); closeAllMenus()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="dropdown-menu-item" onclick="event.stopPropagation(); closeAllMenus(); openRenameModal(${layerIndex})">
+                    <i class="fas fa-edit"></i> Đổi Tên
+                </div>
+            `;
+            
+            // Add "Move to Group" if there are groups
+            if (layerGroups.length > 0) {
+                menuHTML += `
+                    <div class="dropdown-menu-item" onclick="event.stopPropagation(); showMoveToGroupSubmenu(${layerIndex})">
+                        <i class="fas fa-arrow-right"></i> Di Chuyển Sang Nhóm...
+                        <i class="fas fa-chevron-right" style="margin-left: auto; font-size: 0.75rem;"></i>
+                    </div>
+                `;
+            }
+            
+            menu.innerHTML = menuHTML;
+            layerItem.style.position = 'relative';
+            layerItem.appendChild(menu);
+            currentOpenMenu = menu;
+        }
+
+        function showGroupMenu(layerIndex, groupId, event) {
+            closeAllMenus();
+            event.stopPropagation();
+            
+            const group = layerGroups.find(g => g.id === groupId);
+            const layerItem = event.currentTarget.closest('.layer-item');
+            
+            const menu = document.createElement('div');
+            menu.className = 'layer-dropdown-menu';
+            menu.style.left = '0';
+            menu.style.top = event.currentTarget.offsetHeight + 'px';
+            
+            let menuHTML = `
+                <div class="dropdown-menu-header">
+                    Tùy Chọn Nhóm
+                    <button class="dropdown-close-btn" onclick="event.stopPropagation(); closeAllMenus()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="dropdown-menu-item" onclick="event.stopPropagation(); closeAllMenus(); openGroupRenameModal(${layerIndex}, '${groupId}')">
+                    <i class="fas fa-edit"></i> Đổi Tên
+                </div>
+                <div class="dropdown-menu-item" onclick="event.stopPropagation(); showGroupContents('${groupId}')">
+                    <i class="fas fa-eye"></i> Xem Thành Phần
+                </div>
+            `;
+            
+            // Add "Move to Group" if there are other groups
+            const otherGroups = layerGroups.filter(g => g.id !== groupId);
+            if (otherGroups.length > 0) {
+                menuHTML += `
+                    <div class="dropdown-menu-item" onclick="event.stopPropagation(); showMoveGroupSubmenu(${layerIndex}, '${groupId}')">
+                        <i class="fas fa-arrow-right"></i> Di Chuyển Sang Nhóm...
+                        <i class="fas fa-chevron-right" style="margin-left: auto; font-size: 0.75rem;"></i>
+                    </div>
+                `;
+            }
+            
+            menuHTML += `
+                <div class="dropdown-menu-item danger" onclick="event.stopPropagation(); closeAllMenus(); ungroupLayers('${groupId}')">
+                    <i class="fas fa-unlink"></i> Bỏ Nhóm
+                </div>
+            `;
+            
+            menu.innerHTML = menuHTML;
+            layerItem.style.position = 'relative';
+            layerItem.appendChild(menu);
+            currentOpenMenu = menu;
+        }
+
+        function showMoveToGroupSubmenu(layerIndex, parentMenu = null) {
+            const currentMenu = currentOpenMenu;
+            const submenu = document.createElement('div');
+            submenu.className = 'layer-dropdown-menu';
+            submenu.style.left = '210px';
+            submenu.style.top = '0';
+            
+            let html = `
+                <div class="dropdown-menu-header">
+                    Chọn Nhóm
+                    <button class="dropdown-close-btn" onclick="event.stopPropagation(); this.closest('.layer-dropdown-menu').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="dropdown-submenu">
+            `;
+            
+            layerGroups.forEach((group, i) => {
+                html += `
+                    <div class="dropdown-submenu-item" onclick="event.stopPropagation(); closeAllMenus(); moveLayerToGroup(${layerIndex}, ${i})">
+                        <i class="fas fa-folder"></i> ${group.name}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            submenu.innerHTML = html;
+            
+            if (currentMenu) {
+                currentMenu.parentElement.appendChild(submenu);
+            }
+        }
+
+        function showMoveGroupSubmenu(layerIndex, groupId) {
+            const currentMenu = currentOpenMenu;
+            const submenu = document.createElement('div');
+            submenu.className = 'layer-dropdown-menu';
+            submenu.style.left = '210px';
+            submenu.style.top = '0';
+            
+            let html = `
+                <div class="dropdown-menu-header">
+                    Chọn Nhóm
+                    <button class="dropdown-close-btn" onclick="event.stopPropagation(); this.closest('.layer-dropdown-menu').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="dropdown-submenu">
+            `;
+            
+            layerGroups.forEach((group) => {
+                if (group.id !== groupId) {
+                    html += `
+                        <div class="dropdown-submenu-item" onclick="event.stopPropagation(); closeAllMenus(); moveGroupToGroup('${groupId}', '${group.id}')">
+                            <i class="fas fa-folder"></i> ${group.name}
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+            submenu.innerHTML = html;
+            
+            if (currentMenu) {
+                currentMenu.parentElement.appendChild(submenu);
+            }
+        }
+
+        function showGroupContents(groupId) {
+            const group = layerGroups.find(g => g.id === groupId);
+            if (group) {
+                let contents = `📁 ${group.name}\n`;
+                group.children.forEach((child, i) => {
+                    contents += `  ${i + 1}. ${child.name}\n`;
+                });
+                alert(contents);
+                closeAllMenus();
+            }
+        }
+
+        function moveLayerToGroup(layerIndex, groupIndex) {
+            const layer = layers[layerIndex];
+            const group = layerGroups[groupIndex];
+            
+            if (!layer || !group) return;
+            
+            // Remove layer from main array
+            layers.splice(layerIndex, 1);
+            
+            // Add to group's children
+            group.children.push(layer);
+            
+            updateLayersUI();
+            renderAllLayers();
+            showToast(`✅ Di chuyển "${layer.name}" vào nhóm "${group.name}"`, 'success');
+        }
+
+        function moveGroupToGroup(groupId, targetGroupId) {
+            const sourceGroup = layerGroups.find(g => g.id === groupId);
+            const targetGroup = layerGroups.find(g => g.id === targetGroupId);
+            
+            if (!sourceGroup || !targetGroup) return;
+            
+            // Prevent moving group to itself
+            if (groupId === targetGroupId) {
+                showToast('❌ Không thể di chuyển nhóm vào chính nó!', 'error');
+                return;
+            }
+            
+            // Remove source group from main layers array
+            const sourceLayerIndex = layers.findIndex(l => l.isGroup && l.groupId === groupId);
+            if (sourceLayerIndex !== -1) {
+                layers.splice(sourceLayerIndex, 1);
+            }
+            
+            // Remove from layerGroups array
+            const sourceGroupIndex = layerGroups.findIndex(g => g.id === groupId);
+            layerGroups.splice(sourceGroupIndex, 1);
+            
+            // Add to target group's children as a nested group
+            targetGroup.children.push(sourceGroup);
+            
+            updateLayersUI();
+            renderAllLayers();
+            showToast(`✅ Di chuyển nhóm "${sourceGroup.name}" vào "${targetGroup.name}"`, 'success');
+        }
+
+        function openGroupRenameModal(layerIndex, groupId) {
+            const group = layerGroups.find(g => g.id === groupId);
+            if (group) {
+                currentRenameIndex = -1; // Mark as group rename
+                document.getElementById('renameInput').value = group.name;
+                document.getElementById('renameModal').classList.add('active');
+                
+                // Override confirmRenameLayer behavior for groups
+                window.currentGroupRenameId = groupId;
+            }
+        }
+
+        function toggleLayerVisibility(index) {
+            layers[index].visible = !layers[index].visible;
+            updateLayersUI();
+            renderAllLayers();
+            showToast(`Layer "${layers[index].name}" ${layers[index].visible ? 'hiển thị' : 'ẩn'}`, 'success');
+        }
+
+        function renderAllLayers() {
+            canvas.clear();
+            
+            // Render all visible layers from bottom to top
+            layers.forEach(layer => {
+                if (layer.visible && layer.objects.length > 0) {
+                    layer.objects.forEach(obj => {
+                        // Apply opacity and blend mode
+                        obj.opacity = (obj.opacity || 1) * (layer.opacity || 1);
+                        
+                        // Apply blend mode if supported
+                        if (layer.blendMode && layer.blendMode !== 'normal') {
+                            obj.globalCompositeOperation = layer.blendMode;
+                        }
+                        
+                        canvas.add(obj);
+                    });
+                }
+            });
+            
+            canvas.renderAll();
+            updateLayerBorder();
+        }
+
+        function moveLayerUp(index) {
+            if (index < layers.length - 1) {
+                [layers[index], layers[index + 1]] = [layers[index + 1], layers[index]];
+                activeLayerIndex = index + 1;
+                updateLayersUI();
+                updateCurrentLayerColor();
+            }
+        }
+
+        function moveLayerDown(index) {
+            if (index > 0) {
+                [layers[index], layers[index - 1]] = [layers[index - 1], layers[index]];
+                activeLayerIndex = index - 1;
+                updateLayersUI();
+                updateCurrentLayerColor();
+            }
+        }
+
+        function updateLayersUI() {
+            const layersList = document.getElementById('layersList');
+            layersList.innerHTML = '';
+
+            // Helper function to render layers with tree structure
+            function renderLayerTree(parentElement, layersArray, depth = 0) {
+                layersArray.forEach((layer, index) => {
+                    const globalIndex = layers.indexOf(layer);
+                    const isActive = globalIndex === activeLayerIndex;
+                    
+                    // Create layer item wrapper
+                    const layerWrapper = document.createElement('div');
+                    layerWrapper.style.marginLeft = (depth * 20) + 'px';
+                    
+                    if (layer.isGroup) {
+                        // GROUP LAYER
+                        const group = layerGroups.find(g => g.id === layer.groupId);
+                        if (!group) return;
+                        
+                        const isMultiSelected = multiSelectedIndices.has(globalIndex);
+                        const groupEl = document.createElement('div');
+                        groupEl.className = `layer-item ${isActive ? 'active' : ''} ${depth > 0 ? 'layer-item-nested' : ''} ${isMultiSelected ? 'multi-selected' : ''}`;
+                        groupEl.style.borderColor = '#000000';
+                        groupEl.style.position = 'relative';
+                        groupEl.draggable = true;
+                        groupEl.dataset.layerIndex = globalIndex;
+                        
+                        const isExpanded = !group.collapsed;
+                        
+                        groupEl.innerHTML = `
+                            <div style="display: flex; align-items: center; width: 100%; gap: 0;">
+                                <div class="drag-handle" title="拖拽以重新排序">⋮⋮</div>
+                                <div class="layer-tree-expander" onclick="event.stopPropagation(); toggleGroupExpanded('${layer.groupId}')">
+                                    ${group.children.length > 0 ? (isExpanded ? '▼' : '▶') : '·'}
+                                </div>
+                                <div class="layer-visibility" onclick="event.stopPropagation(); toggleLayerVisibility(${globalIndex})">
+                                    <i class="fas ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                                </div>
+                                <div class="layer-color-indicator" style="background: #000000;"></div>
+                                <div style="flex: 1; display: flex; flex-direction: column; gap: 3px; position: relative;">
+                                    <div style="display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 4px; border-radius: 4px; transition: all 0.2s;" 
+                                         onclick="event.stopPropagation(); showGroupMenu(${globalIndex}, '${layer.groupId}', event)"
+                                         oncontextmenu="event.preventDefault(); showGroupMenu(${globalIndex}, '${layer.groupId}', event)"
+                                         onmouseover="this.style.background='#f0f0f0'"
+                                         onmouseout="this.style.background='transparent'">
+                                        <span style="font-weight: 600; color: #000000;">📁 ${layer.name}</span>
+                                        <span style="font-size: 0.8rem; color: #999;">(${group.children.length})</span>
+                                        <i class="fas fa-chevron-down" style="font-size: 0.75rem; color: #999; margin-left: auto;"></i>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #999; padding: 0 4px;">
+                                        <span title="Blend Mode">🎨 ${layer.blendMode || 'normal'}</span> • 
+                                        <span title="Opacity">👁️ ${Math.round((layer.opacity || 1) * 100)}%</span>
+                                    </div>
+                                </div>
+                                <div class="layer-controls" style="opacity: ${depth > 0 ? '0.7' : '1'};">
+                                    <button class="layer-btn group-mode-btn" onclick="event.stopPropagation(); moveLayerUp(${globalIndex})" title="Lên trên">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button class="layer-btn group-mode-btn" onclick="event.stopPropagation(); moveLayerDown(${globalIndex})" title="Xuống dưới">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <button class="layer-btn group-mode-btn" onclick="event.stopPropagation(); deleteLayer(${globalIndex})" title="Xoá">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="group-mode-indicator">👥</div>
+                            <div class="multi-select-badge">${multiSelectedIndices.size}</div>
+                        `;
+                        
+                        groupEl.onclick = (e) => selectLayer(globalIndex, e.ctrlKey || e.metaKey, e.shiftKey);
+                        groupEl.oncontextmenu = (e) => showMultiSelectMenu(e, globalIndex);
+                        groupEl.classList.add('group-selected'); // Add group-selected class
+                        
+                        // Add drag event listeners
+                        groupEl.addEventListener('dragstart', (e) => handleLayerDragStart(e, globalIndex));
+                        groupEl.addEventListener('dragover', (e) => handleLayerDragOver(e));
+                        groupEl.addEventListener('drop', (e) => handleLayerDrop(e, globalIndex));
+                        groupEl.addEventListener('dragleave', (e) => handleLayerDragLeave(e));
+                        groupEl.addEventListener('dragend', (e) => handleLayerDragEnd(e));
+                        
+                        layerWrapper.appendChild(groupEl);
+                        
+                        // Add children container
+                        if (group.children.length > 0 && isExpanded) {
+                            const childrenContainer = document.createElement('div');
+                            childrenContainer.style.borderLeft = '2px solid #e0e0e0';
+                            renderLayerTree(childrenContainer, group.children, depth + 1);
+                            layerWrapper.appendChild(childrenContainer);
+                        }
+                        
+                    } else {
+                        // REGULAR LAYER
+                        const isMultiSelected = multiSelectedIndices.has(globalIndex);
+                        const layerEl = document.createElement('div');
+                        layerEl.className = `layer-item ${isActive ? 'active' : ''} ${depth > 0 ? 'layer-item-nested' : ''} ${isMultiSelected ? 'multi-selected' : ''}`;
+                        layerEl.style.borderColor = layer.color;
+                        layerEl.style.position = 'relative';
+                        layerEl.draggable = true;
+                        layerEl.dataset.layerIndex = globalIndex;
+                        
+                        layerEl.innerHTML = `
+                            <div style="display: flex; align-items: center; width: 100%; gap: 0;">
+                                <div class="drag-handle" title="拖拽以重新排序">⋮⋮</div>
+                                <div class="layer-tree-expander empty">·</div>
+                                <div class="layer-visibility" onclick="event.stopPropagation(); toggleLayerVisibility(${globalIndex})">
+                                    <i class="fas ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                                </div>
+                                <div class="layer-color-indicator" style="background: ${layer.color};"></div>
+                                <div style="flex: 1; display: flex; flex-direction: column; gap: 3px; position: relative;">
+                                    <div style="display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 4px; border-radius: 4px; transition: all 0.2s;"
+                                         onclick="event.stopPropagation(); showLayerMenu(${globalIndex}, event)"
+                                         onmouseover="this.style.background='#f0f0f0'"
+                                         onmouseout="this.style.background='transparent'">
+                                        <input type="text" class="layer-name-input" value="${layer.name}" 
+                                               onclick="event.stopPropagation(); this.select()"
+                                               onchange="renameLayer(${globalIndex}, this.value)"
+                                               onblur="this.blur()"
+                                               style="flex: 1; cursor: pointer;">
+                                        <i class="fas fa-chevron-down" style="font-size: 0.75rem; color: #999;"></i>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #999; padding: 0 4px;">
+                                        <span title="Blend Mode">🎨 ${layer.blendMode || 'normal'}</span> • 
+                                        <span title="Opacity">👁️ ${Math.round((layer.opacity || 1) * 100)}%</span>
+                                    </div>
+                                </div>
+                                <div class="layer-controls" style="opacity: ${depth > 0 ? '0.7' : '1'};">
+                                    <button class="layer-btn" onclick="event.stopPropagation(); duplicateLayer(${globalIndex})" title="Nhân đôi">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <button class="layer-btn" onclick="event.stopPropagation(); moveLayerUp(${globalIndex})" title="Lên trên">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button class="layer-btn" onclick="event.stopPropagation(); moveLayerDown(${globalIndex})" title="Xuống dưới">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <button class="layer-btn" onclick="event.stopPropagation(); deleteLayer(${globalIndex})" title="Xoá">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="multi-select-badge">${multiSelectedIndices.size}</div>
+                        `;
+                        
+                        // Add drag event listeners
+                        layerEl.addEventListener('dragstart', (e) => handleLayerDragStart(e, globalIndex));
+                        layerEl.addEventListener('dragover', (e) => handleLayerDragOver(e));
+                        layerEl.addEventListener('drop', (e) => handleLayerDrop(e, globalIndex));
+                        layerEl.addEventListener('dragleave', (e) => handleLayerDragLeave(e));
+                        layerEl.addEventListener('dragend', (e) => handleLayerDragEnd(e));
+                        
+                        layerEl.onclick = (e) => selectLayer(globalIndex, e.ctrlKey || e.metaKey, e.shiftKey);
+                        layerEl.oncontextmenu = (e) => showMultiSelectMenu(e, globalIndex);
+                        layerWrapper.appendChild(layerEl);
+                    }
+                    
+                    parentElement.appendChild(layerWrapper);
+                });
+            }
+            
+            // Render tree structure
+            renderLayerTree(layersList, layers, 0);
+
+            document.getElementById('layerCount').textContent = layers.length;
+            document.getElementById('currentLayerInfo').textContent = layers[activeLayerIndex]?.name || 'Không có';
+        }
+
+        function updateCurrentLayerColor() {
+            const currentLayer = layers[activeLayerIndex];
+            if (currentLayer) {
+                // For groups, always use BLACK
+                if (currentLayer.isGroup) {
+                    document.documentElement.style.setProperty('--current-layer-color', '#000000');
+                    
+                    // Add visual indicator in header
+                    const header = document.querySelector('.left-sidebar h3');
+                    if (header) {
+                        header.textContent = `🖤 Nhóm: ${currentLayer.name}`;
+                    }
+                } else {
+                    const color = currentLayer.color;
+                    document.documentElement.style.setProperty('--current-layer-color', color);
+                    
+                    // Show normal layer info
+                    const header = document.querySelector('.left-sidebar h3');
+                    if (header) {
+                        header.textContent = `Layer: ${currentLayer.name}`;
+                    }
+                }
+            }
+        }
+
+        function toggleGroupExpanded(groupId) {
+            const group = layerGroups.find(g => g.id === groupId);
+            if (group) {
+                group.collapsed = !group.collapsed;
+                updateLayersUI();
+                showToast(`${group.collapsed ? '▶' : '▼'} Nhóm "${group.name}"`, 'info');
+            }
+        }
+
+        // ===== KEYBOARD SHORTCUTS FUNCTIONS =====
+        function showKeyboardShortcuts() {
+            document.getElementById('shortcutsModal').classList.add('active');
+            showToast('⌨️ Xem danh sách phím tắt', 'info');
+        }
+
+        function hideKeyboardShortcuts() {
+            document.getElementById('shortcutsModal').classList.remove('active');
+        }
+
+        // Close shortcuts modal when clicking outside
+        document.getElementById('shortcutsModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideKeyboardShortcuts();
+            }
+        });
+
+        // ===== DRAG-AND-DROP FUNCTIONS =====
+        let draggedLayerIndex = -1;
+        let draggedOverIndex = -1;
+
+        function handleLayerDragStart(e, layerIndex) {
+            draggedLayerIndex = layerIndex;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.innerHTML);
+            showToast(`🎯 Đang kéo: ${layers[layerIndex].name}`, 'info');
+        }
+
+        function handleLayerDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            if (e.target.closest('.layer-item')) {
+                const layerItem = e.target.closest('.layer-item');
+                const rect = layerItem.getBoundingClientRect();
+                const midpoint = rect.height / 2;
+                const offsetY = e.clientY - rect.top;
+                
+                // Remove previous drag-over classes
+                document.querySelectorAll('.layer-item').forEach(el => {
+                    el.classList.remove('drag-over-before', 'drag-over-after', 'drag-over-inside');
+                });
+                
+                // Add drag-over visual feedback
+                if (offsetY < midpoint) {
+                    layerItem.classList.add('drag-over-before');
+                } else {
+                    layerItem.classList.add('drag-over-after');
+                }
+            }
+        }
+
+        function handleLayerDrop(e, targetIndex) {
+            e.preventDefault();
+            
+            // Remove drag-over classes
+            document.querySelectorAll('.layer-item').forEach(el => {
+                el.classList.remove('drag-over-before', 'drag-over-after', 'drag-over-inside');
+            });
+            
+            if (draggedLayerIndex !== -1 && draggedLayerIndex !== targetIndex) {
+                const draggedLayer = layers[draggedLayerIndex];
+                const targetLayer = layers[targetIndex];
+                
+                // Determine insert position
+                const rect = e.target.closest('.layer-item').getBoundingClientRect();
+                const midpoint = rect.height / 2;
+                const offsetY = e.clientY - rect.top;
+                
+                // Remove dragged layer
+                layers.splice(draggedLayerIndex, 1);
+                
+                // Recalculate target index after removal
+                let newTargetIndex = layers.indexOf(targetLayer);
+                
+                // Insert at new position
+                if (offsetY < midpoint && draggedLayerIndex < targetIndex) {
+                    // Dragging up
+                    layers.splice(newTargetIndex, 0, draggedLayer);
+                } else if (offsetY >= midpoint && draggedLayerIndex > targetIndex) {
+                    // Dragging down
+                    layers.splice(newTargetIndex + 1, 0, draggedLayer);
+                } else if (draggedLayerIndex < targetIndex) {
+                    // Dragging down
+                    layers.splice(newTargetIndex + 1, 0, draggedLayer);
+                } else {
+                    // Dragging up
+                    layers.splice(newTargetIndex, 0, draggedLayer);
+                }
+                
+                // Update active layer index if needed
+                if (activeLayerIndex === draggedLayerIndex) {
+                    activeLayerIndex = layers.indexOf(draggedLayer);
+                }
+                
+                updateLayersUI();
+                renderAllLayers();
+                
+                showToast(`✅ "${draggedLayer.name}" được di chuyển thành công!`, 'success');
+            }
+            
+            draggedLayerIndex = -1;
+        }
+
+        function handleLayerDragLeave(e) {
+            if (!e.target.closest('.layer-item').contains(e.relatedTarget)) {
+                document.querySelectorAll('.layer-item').forEach(el => {
+                    el.classList.remove('drag-over-before', 'drag-over-after', 'drag-over-inside');
+                });
+            }
+        }
+
+        function handleLayerDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.layer-item').forEach(el => {
+                el.classList.remove('drag-over-before', 'drag-over-after', 'drag-over-inside', 'dragging');
+            });
+            draggedLayerIndex = -1;
+        }
+
+        // ===== MULTI-SELECT BATCH OPERATIONS =====
+        function clearMultiSelection() {
+            multiSelectedIndices.clear();
+            updateLayersUI();
+            showToast('🔄 Bỏ chọn tất cả', 'info');
+        }
+
+        function deleteMultiSelected() {
+            if (multiSelectedIndices.size === 0) {
+                showToast('❌ Không có lớp nào được chọn!', 'error');
+                return;
+            }
+
+            const names = Array.from(multiSelectedIndices).map(i => layers[i].name).join(', ');
+            if (confirm(`Xoá ${multiSelectedIndices.size} lớp: ${names}?`)) {
+                // Delete in reverse order to avoid index shifting
+                const indicesToDelete = Array.from(multiSelectedIndices).sort((a, b) => b - a);
+                indicesToDelete.forEach(index => {
+                    if (layers.length > 1) {
+                        layers.splice(index, 1);
+                    }
+                });
+                
+                multiSelectedIndices.clear();
+                activeLayerIndex = Math.min(activeLayerIndex, layers.length - 1);
+                updateLayersUI();
+                renderAllLayers();
+                showToast(`✅ Đã xoá ${indicesToDelete.length} lớp!`, 'success');
+            }
+        }
+
+        function hideMultiSelected() {
+            if (multiSelectedIndices.size === 0) {
+                showToast('❌ Không có lớp nào được chọn!', 'error');
+                return;
+            }
+
+            multiSelectedIndices.forEach(index => {
+                layers[index].visible = false;
+            });
+            
+            updateLayersUI();
+            renderAllLayers();
+            showToast(`👁️ Ẩn ${multiSelectedIndices.size} lớp`, 'success');
+        }
+
+        function showMultiSelected() {
+            if (multiSelectedIndices.size === 0) {
+                showToast('❌ Không có lớp nào được chọn!', 'error');
+                return;
+            }
+
+            multiSelectedIndices.forEach(index => {
+                layers[index].visible = true;
+            });
+            
+            updateLayersUI();
+            renderAllLayers();
+            showToast(`👁️ Hiển thị ${multiSelectedIndices.size} lớp`, 'success');
+        }
+
+        function groupMultiSelected() {
+            if (multiSelectedIndices.size < 1) {
+                showToast('❌ Chọn ít nhất 1 lớp để tạo nhóm!', 'error');
+                return;
+            }
+
+            // Open group modal with pre-selected layers
+            const selectedLayersArray = Array.from(multiSelectedIndices);
+            layersToGroup = new Set(selectedLayersArray);
+            startGroupLayers();
+        }
+
+        function duplicateMultiSelected() {
+            if (multiSelectedIndices.size === 0) {
+                showToast('❌ Không có lớp nào được chọn!', 'error');
+                return;
+            }
+
+            const indicesToDuplicate = Array.from(multiSelectedIndices).sort((a, b) => b - a);
+            let newIndices = new Set();
+
+            indicesToDuplicate.forEach(index => {
+                const layer = layers[index];
+                const duplicatedLayer = JSON.parse(JSON.stringify(layer));
+                duplicatedLayer.id = Date.now() + Math.random();
+                duplicatedLayer.objects = layer.objects.map(obj => JSON.parse(JSON.stringify(obj)));
+                
+                layers.splice(index + 1, 0, duplicatedLayer);
+                newIndices.add(index + 1);
+            });
+
+            multiSelectedIndices = newIndices;
+            updateLayersUI();
+            renderAllLayers();
+            showToast(`📋 Nhân đôi ${indicesToDuplicate.length} lớp!`, 'success');
+        }
+
+        // ===== MULTI-SELECT CONTEXT MENU HANDLERS =====
+        function showMultiSelectMenu(e, layerIndex) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (multiSelectedIndices.size === 0) {
+                showToast('💡 Ctrl+Click để chọn nhiều lớp', 'info');
+                return;
+            }
+
+            const menu = document.getElementById('multiSelectMenu');
+            menu.classList.add('active');
+            
+            // Position menu at cursor
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+
+            showToast(`🎯 Đã chọn ${multiSelectedIndices.size} lớp - Click chuột phải để xem tùy chọn`, 'info');
+        }
+
+        function closeMultiSelectMenu() {
+            const menu = document.getElementById('multiSelectMenu');
+            menu.classList.remove('active');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function() {
+            closeMultiSelectMenu();
+        });
+
+        document.addEventListener('contextmenu', function() {
+            closeMultiSelectMenu();
+        });
+
+        // ===== BLEND MODE & OPACITY MANAGEMENT =====
+        
+        // Tất cả các blend modes Photoshop
+        const BLEND_MODES = [
+            { name: 'normal', label: 'Bình Thường', css: 'normal' },
+            { name: 'multiply', label: 'Nhân', css: 'multiply' },
+            { name: 'screen', label: 'Màn Hình', css: 'screen' },
+            { name: 'overlay', label: 'Phủ', css: 'overlay' },
+            { name: 'darken', label: 'Làm Tối', css: 'darken' },
+            { name: 'lighten', label: 'Làm Sáng', css: 'lighten' },
+            { name: 'color-dodge', label: 'Color Dodge', css: 'color-dodge' },
+            { name: 'color-burn', label: 'Color Burn', css: 'color-burn' },
+            { name: 'hard-light', label: 'Hard Light', css: 'hard-light' },
+            { name: 'soft-light', label: 'Soft Light', css: 'soft-light' },
+            { name: 'difference', label: 'Chênh Lệch', css: 'difference' },
+            { name: 'exclusion', label: 'Loại Trừ', css: 'exclusion' },
+            { name: 'hue', label: 'Sắc Thái', css: 'hue' },
+            { name: 'saturation', label: 'Độ Bão Hòa', css: 'saturation' },
+            { name: 'color', label: 'Màu', css: 'color' },
+            { name: 'luminosity', label: 'Độ Sáng', css: 'luminosity' },
+            { name: 'add', label: 'Cộng', css: 'lighten' },
+            { name: 'subtract', label: 'Trừ', css: 'darken' },
+            { name: 'divide', label: 'Chia', css: 'screen' }
+        ];
+
+        let tempBlendMode = 'normal';
+        let tempOpacity = 1;
+
+        // Initialize blend mode panel
+        function initBlendModePanel() {
+            const grid = document.getElementById('blendModeGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            BLEND_MODES.forEach(mode => {
+                const btn = document.createElement('button');
+                btn.className = 'blend-mode-btn';
+                btn.textContent = mode.label;
+                btn.onclick = () => selectBlendMode(mode.name, mode.css);
+                grid.appendChild(btn);
+            });
+        }
+
+        function toggleBlendOpacityPanel() {
+            const panel = document.getElementById('blendOpacityPanel');
+            panel.classList.toggle('active');
+            
+            if (panel.classList.contains('active')) {
+                updateBlendOpacityPanel();
+                initBlendModePanel();
+                showToast('🎨 Mở bảng điều chỉnh Blend & Opacity', 'info');
+            } else {
+                showToast('🎨 Đóng bảng điều chỉnh', 'info');
+            }
+        }
+
+        function updateBlendOpacityPanel() {
+            if (multiSelectedIndices.size > 0) {
+                // Get values from first selected layer
+                const firstIndex = Array.from(multiSelectedIndices)[0];
+                const layer = layers[firstIndex];
+                tempBlendMode = layer.blendMode || 'normal';
+                tempOpacity = (layer.opacity || 1) * 100;
+            } else if (activeLayerIndex >= 0 && layers[activeLayerIndex]) {
+                // Get values from active layer
+                const layer = layers[activeLayerIndex];
+                tempBlendMode = layer.blendMode || 'normal';
+                tempOpacity = (layer.opacity || 1) * 100;
+            }
+
+            // Update slider and value display
+            document.getElementById('opacitySlider').value = Math.round(tempOpacity);
+            document.getElementById('opacityValue').textContent = Math.round(tempOpacity) + '%';
+
+            // Update active blend mode button
+            document.querySelectorAll('.blend-mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(tempBlendMode.toLowerCase()) || 
+                    (tempBlendMode === 'normal' && btn.textContent === 'Bình Thường')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function selectBlendMode(modeName, cssMode) {
+            tempBlendMode = modeName;
+            
+            // Update visual feedback
+            document.querySelectorAll('.blend-mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            showToast(`🎨 Chế độ hòa trộn: ${event.target.textContent}`, 'info');
+        }
+
+        function updateOpacity(value) {
+            tempOpacity = parseInt(value);
+            document.getElementById('opacityValue').textContent = tempOpacity + '%';
+        }
+
+        function applyBlendOpacity() {
+            if (multiSelectedIndices.size > 0) {
+                // Apply to all multi-selected layers
+                let count = 0;
+                multiSelectedIndices.forEach(index => {
+                    if (layers[index]) {
+                        layers[index].blendMode = tempBlendMode;
+                        layers[index].opacity = tempOpacity / 100;
+                        count++;
+                    }
+                });
+                showToast(`✅ Áp dụng cho ${count} lớp!`, 'success');
+            } else if (activeLayerIndex >= 0 && layers[activeLayerIndex]) {
+                // Apply to single active layer
+                layers[activeLayerIndex].blendMode = tempBlendMode;
+                layers[activeLayerIndex].opacity = tempOpacity / 100;
+                showToast('✅ Áp dụng thành công!', 'success');
+            }
+
+            updateLayersUI();
+            renderAllLayers();
+        }
+
+        function resetBlendOpacity() {
+            tempBlendMode = 'normal';
+            tempOpacity = 100;
+            document.getElementById('opacitySlider').value = 100;
+            document.getElementById('opacityValue').textContent = '100%';
+            updateBlendOpacityPanel();
+            showToast('🔄 Đặt lại thành mặc định', 'info');
+        }
+
+        // ===== UPLOAD & CANVAS FUNCTIONS =====
+        function showUploadModal() {
+            document.getElementById('uploadModal').classList.add('active');
+        }
+
+        function hideUploadModal() {
+            document.getElementById('uploadModal').classList.remove('active');
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fabric.Image.fromURL(e.target.result, function(img) {
+                    const maxWidth = 800;
+                    const maxHeight = 600;
+                    const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+                    
+                    img.scale(scale);
+                    img.set({
+                        left: (canvas.width - img.width * scale) / 2,
+                        top: (canvas.height - img.height * scale) / 2,
+                    });
+
+                    // Add to current layer
+                    const currentLayer = layers[activeLayerIndex];
+                    currentLayer.objects.push(img);
+                    
+                    canvas.clear();
+                    
+                    // Render all visible layers
+                    layers.forEach(layer => {
+                        if (layer.visible) {
+                            layer.objects.forEach(obj => canvas.add(obj));
+                        }
+                    });
+                    
+                    canvas.renderAll();
+                    hideUploadModal();
+                    showToast('Ảnh đã được tải lên layer: ' + currentLayer.name, 'success');
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setupDragAndDrop() {
+            document.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            document.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const event = { target: { files: files } };
+                    handleImageUpload(event);
+                }
+            });
+        }
+
+        // ===== TOOLS =====
+        function addText() {
+            createNewLayer();
+            const layer = layers[activeLayerIndex];
+            
+            const text = new fabric.Text('Nhập text', {
+                left: canvas.width / 2,
+                top: canvas.height / 2,
+                fontSize: 24,
+                fill: layer.color,
+                originX: 'center',
+                originY: 'center',
+            });
+            layer.objects.push(text);
+            canvas.add(text);
+            canvas.setActiveObject(text);
+            canvas.renderAll();
+            updateLayerBorder();
+            showToast(`✏️ Thêm text vào layer mới: "${layer.name}"`, 'success');
+        }
+
+        function addShape() {
+            if (!layers[activeLayerIndex]) return;
+            const layer = layers[activeLayerIndex];
+            
+            const shape = new fabric.Circle({
+                left: canvas.width / 2 - 50,
+                top: canvas.height / 2 - 50,
+                radius: 50,
+                fill: layer.color,
+                stroke: layer.color,
+                strokeWidth: 2,
+            });
+            layer.objects.push(shape);
+            canvas.add(shape);
+            canvas.setActiveObject(shape);
+            canvas.renderAll();
+            updateLayerBorder();
+            showToast(`✨ Thêm hình vào ${layer.name}`, 'success');
+        }
+
+        function rotateImage() {
+            const layer = layers[activeLayerIndex];
+            if (layer.objects.length === 0) {
+                showToast('Layer trống! Thêm ảnh trước', 'error');
+                return;
+            }
+
+            const obj = canvas.getActiveObject();
+            if (!obj) {
+                // Rotate all objects in layer
+                layer.objects.forEach(o => {
+                    o.rotate((o.angle || 0) + 15);
+                });
+            } else {
+                obj.rotate((obj.angle || 0) + 15);
+            }
+            
+            canvas.renderAll();
+            updateLayerBorder();
+            showToast(`🔄 Xoay trên ${layer.name}`, 'success');
+        }
+
+        function flipImageHorizontal() {
+            const layer = layers[activeLayerIndex];
+            if (layer.objects.length === 0) {
+                showToast('Layer trống! Thêm ảnh trước', 'error');
+                return;
+            }
+
+            const obj = canvas.getActiveObject();
+            if (!obj) {
+                // Flip all objects in layer
+                layer.objects.forEach(o => {
+                    o.flipX = !o.flipX;
+                });
+            } else {
+                obj.flipX = !obj.flipX;
+            }
+            
+            canvas.renderAll();
+            updateLayerBorder();
+            showToast(`↔️ Lật ngang trên ${layer.name}`, 'success');
+        }
+
+        function cropImage() {
+            showToast('Chức năng crop sẽ được thêm', 'info');
+        }
+
+        // ===== FILTERS =====
+        function applyFilter(filterType) {
+            const layer = layers[activeLayerIndex];
+            if (layer.objects.length === 0) {
+                showToast('Layer trống! Thêm ảnh trước', 'error');
+                return;
+            }
+
+            const obj = layer.objects.find(o => o.isType && o.isType('image'));
+            if (!obj) {
+                showToast('Không tìm thấy ảnh trong layer', 'error');
+                return;
+            }
+
+            switch(filterType) {
+                case 'grayscale':
+                    obj.filters = [new fabric.Image.filters.Grayscale()];
+                    break;
+                case 'sepia':
+                    obj.filters = [new fabric.Image.filters.Sepia()];
+                    break;
+                case 'blur':
+                    obj.filters = [new fabric.Image.filters.Blur()];
+                    break;
+            }
+
+            obj.applyFilters();
+            canvas.renderAll();
+            showToast(`Áp dụng ${filterType} trên ${layer.name}`, 'success');
+        }
+
+        // ===== ADJUSTMENTS =====
+        function updateBrightness(value) {
+            document.getElementById('brightnessValue').textContent = value + '%';
+            const layer = layers[activeLayerIndex];
+            const obj = layer.objects.find(o => o.isType && o.isType('image'));
+            if (obj) {
+                obj.filters = [new fabric.Image.filters.Brightness({ brightness: value / 100 })];
+                obj.applyFilters();
+                canvas.renderAll();
+            }
+        }
+
+        function updateContrast(value) {
+            document.getElementById('contrastValue').textContent = value + '%';
+            const layer = layers[activeLayerIndex];
+            const obj = layer.objects.find(o => o.isType && o.isType('image'));
+            if (obj) {
+                obj.filters = [new fabric.Image.filters.Contrast({ contrast: value / 100 })];
+                obj.applyFilters();
+                canvas.renderAll();
+            }
+        }
+
+        function updateSaturation(value) {
+            document.getElementById('saturationValue').textContent = value + '%';
+            const layer = layers[activeLayerIndex];
+            const obj = layer.objects.find(o => o.isType && o.isType('image'));
+            if (obj) {
+                obj.filters = [new fabric.Image.filters.Saturation({ saturation: value / 100 })];
+                obj.applyFilters();
+                canvas.renderAll();
+            }
+        }
+
+        // ===== AI FEATURES =====
+        function removeBackground() {
+            const layer = layers[activeLayerIndex];
+            
+            // Check if group is selected
+            if (layer.isGroup) {
+                showToast('❌ Không thể sử dụng tính năng này cho nhóm lớp! Vui lòng chọn một lớp riêng lẻ.', 'error');
+                return;
+            }
+            
+            showLoading('Đang xoá nền trên ' + layer.name + '...');
+            setTimeout(() => {
+                hideLoading();
+                showToast('API chưa kết nối. Thêm bước sửa trong vùng chọn...', 'info');
+            }, 1500);
+        }
+
+        function showInpaintModal() {
+            const layer = layers[activeLayerIndex];
+            
+            // Check if group is selected
+            if (layer.isGroup) {
+                showToast('❌ Không thể sử dụng tính năng này cho nhóm lớp! Vui lòng chọn một lớp riêng lẻ.', 'error');
+                return;
+            }
+            
+            document.getElementById('inpaintModal').classList.add('active');
+        }
+
+        function hideInpaintModal() {
+            document.getElementById('inpaintModal').classList.remove('active');
+        }
+
+        function executeInpaint() {
+            const layer = layers[activeLayerIndex];
+            
+            // Check if group is selected
+            if (layer.isGroup) {
+                showToast('❌ Không thể sử dụng tính năng này cho nhóm lớp! Vui lòng chọn một lớp riêng lẻ.', 'error');
+                hideInpaintModal();
+                return;
+            }
+            
+            const prompt = document.getElementById('inpaintPrompt').value;
+            if (!prompt) {
+                showToast('Nhập mô tả vùng cần sửa', 'error');
+                return;
+            }
+
+            const currentLayerIndex = activeLayerIndex;
+            const currentLayerName = layers[currentLayerIndex].name;
+            showLoading(`Đang sửa vùng trên ${currentLayerName}...`);
+            hideInpaintModal();
+
+            // Simulate inpainting API call
+            setTimeout(() => {
+                hideLoading();
+                
+                // Create new layer for inpaint result (but don't select it)
+                const newLayer = {
+                    id: Date.now(),
+                    name: `Sửa từ ${currentLayerName}`,
+                    color: LAYER_COLORS[(layers.length) % LAYER_COLORS.length],
+                    visible: true,
+                    objects: [],
+                    opacity: 1,
+                    fromInpaint: true
+                };
+                layers.push(newLayer);
+                
+                // Keep current layer selected
+                activeLayerIndex = currentLayerIndex;
+                updateLayersUI();
+                updateCurrentLayerColor();
+                
+                showToast(`✅ Sửa xong! Layer mới: "${newLayer.name}"\n💡 Layer hiện tại vẫn là: ${currentLayerName}\n📝 Có thể bấm "Sửa Vùng" lại để thêm nhiều lần!`, 'success');
+            }, 2000);
+        }
+
+        function upscaleImage() {
+            const layer = layers[activeLayerIndex];
+            
+            // Check if group is selected
+            if (layer.isGroup) {
+                showToast('❌ Không thể sử dụng tính năng này cho nhóm lớp! Vui lòng chọn một lớp riêng lẻ.', 'error');
+                return;
+            }
+            
+            showLoading('Đang nâng cấp độ phân giải trên ' + layer.name + '...');
+            setTimeout(() => {
+                hideLoading();
+                showToast('API chưa kết nối', 'info');
+            }, 1500);
+        }
+
+        // ===== LAYER SELECTION BORDER & CONTROLS =====
+        function updateLayerBorder() {
+            const border = document.getElementById('layerBorder');
+            const layer = layers[activeLayerIndex];
+            
+            if (!layer || layer.objects.length === 0) {
+                border.classList.remove('visible');
+                return;
+            }
+
+            // Get bounding box of layer objects
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            
+            layer.objects.forEach(obj => {
+                const bounds = obj.getBoundingRect();
+                minX = Math.min(minX, bounds.left);
+                minY = Math.min(minY, bounds.top);
+                maxX = Math.max(maxX, bounds.left + bounds.width);
+                maxY = Math.max(maxY, bounds.top + bounds.height);
+            });
+
+            if (isFinite(minX)) {
+                border.style.left = (minX * currentZoom) + 'px';
+                border.style.top = (minY * currentZoom) + 'px';
+                border.style.width = ((maxX - minX) * currentZoom) + 'px';
+                border.style.height = ((maxY - minY) * currentZoom) + 'px';
+                border.style.borderColor = layer.color;
+                border.classList.add('visible');
+                
+                // Add corner control buttons
+                addLayerControlButtons(border, layer.color);
+            }
+        }
+
+        function addLayerControlButtons(border, color) {
+            // Remove old buttons
+            const oldButtons = document.querySelectorAll('.layer-control-btn');
+            oldButtons.forEach(btn => btn.remove());
+
+            const positions = {
+                'delete': { top: '-16px', left: '-16px', icon: 'fa-trash' },
+                'duplicate': { top: '-16px', right: '-16px', icon: 'fa-copy' },
+                'rotate': { bottom: '-16px', left: '-16px', icon: 'fa-rotate-right' },
+                'scale': { bottom: '-16px', right: '-16px', icon: 'fa-expand' }
+            };
+
+            Object.entries(positions).forEach(([action, pos]) => {
+                const btn = document.createElement('button');
+                btn.className = 'layer-control-btn layer-corner-btn';
+                btn.style.borderColor = color;
+                btn.style.color = color;
+                btn.innerHTML = `<i class="fas ${pos.icon}"></i>`;
+                
+                if (pos.top) btn.style.top = pos.top;
+                if (pos.bottom) btn.style.bottom = pos.bottom;
+                if (pos.left) btn.style.left = pos.left;
+                if (pos.right) btn.style.right = pos.right;
+
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    handleLayerControlAction(action);
+                };
+
+                border.appendChild(btn);
+            });
+
+            // Add resize handles on edges
+            const handlePositions = [
+                { name: 'n', top: '-5px', left: '50%', cursor: 'n-resize' },      // Top
+                { name: 's', bottom: '-5px', left: '50%', cursor: 's-resize' },    // Bottom
+                { name: 'w', top: '50%', left: '-5px', cursor: 'w-resize' },       // Left
+                { name: 'e', top: '50%', right: '-5px', cursor: 'e-resize' }       // Right
+            ];
+
+            handlePositions.forEach(pos => {
+                const handle = document.createElement('div');
+                handle.className = 'resize-handle';
+                handle.style.borderColor = color;
+                handle.style.background = color;
+                
+                if (pos.top) handle.style.top = pos.top;
+                if (pos.bottom) handle.style.bottom = pos.bottom;
+                if (pos.left) handle.style.left = pos.left;
+                if (pos.right) handle.style.right = pos.right;
+                
+                handle.style.cursor = pos.cursor;
+                handle.style.transform = 'translate(-50%, -50%)';
+
+                handle.onmousedown = (e) => {
+                    e.stopPropagation();
+                    handleLayerResize(e, pos.name);
+                };
+
+                border.appendChild(handle);
+            });
+        }
+
+        function handleLayerControlAction(action) {
+            const layerIndex = activeLayerIndex;
+            
+            switch(action) {
+                case 'delete':
+                    deleteLayer(layerIndex);
+                    break;
+                case 'duplicate':
+                    duplicateLayer(layerIndex);
+                    break;
+                case 'rotate':
+                    rotateLayerContent();
+                    break;
+                case 'scale':
+                    showToast('Scale layer - Kéo các điểm neo ở cạnh', 'info');
+                    break;
+            }
+        }
+
+        function rotateLayerContent() {
+            const layer = layers[activeLayerIndex];
+            if (layer.objects.length === 0) {
+                showToast('Layer trống!', 'error');
+                return;
+            }
+            
+            layer.objects.forEach(obj => {
+                obj.rotate((obj.angle || 0) + 15);
+            });
+            canvas.renderAll();
+            updateLayerBorder();
+            showToast('Xoay layer ' + layer.name, 'success');
+        }
+
+        function handleLayerResize(e, direction) {
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const layer = layers[activeLayerIndex];
+
+            const onMouseMove = (moveEvent) => {
+                const deltaX = moveEvent.clientX - startX;
+                const deltaY = moveEvent.clientY - startY;
+
+                layer.objects.forEach(obj => {
+                    if (direction === 'e' || direction === 'w') {
+                        obj.scaleX = Math.max(0.1, obj.scaleX + (deltaX * 0.01));
+                    }
+                    if (direction === 'n' || direction === 's') {
+                        obj.scaleY = Math.max(0.1, obj.scaleY + (deltaY * 0.01));
+                    }
+                });
+                canvas.renderAll();
+                updateLayerBorder();
+            };
+
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                showToast('Đã điều chỉnh kích thước layer', 'success');
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+
+        // ===== ZOOM =====
+        function zoomIn() {
+            currentZoom += 0.1;
+            canvas.setZoom(currentZoom);
+            updateZoomLevel();
+            updateLayerBorder();
+        }
+
+        function zoomOut() {
+            currentZoom = Math.max(0.1, currentZoom - 0.1);
+            canvas.setZoom(currentZoom);
+            updateZoomLevel();
+            updateLayerBorder();
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            canvas.setZoom(currentZoom);
+            updateZoomLevel();
+            updateLayerBorder();
+        }
+
+        function updateZoomLevel() {
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        // ===== CANVAS EVENT LISTENERS =====
+        canvas.on('selection:created', () => {
+            updateLayerBorder();
+            const obj = canvas.getActiveObject();
+            if (obj) {
+                showToast(`Chọn: ${obj.name || 'Đối tượng'}`, 'info');
+            }
+        });
+
+        canvas.on('selection:updated', updateLayerBorder);
+        
+        canvas.on('selection:cleared', () => {
+            updateLayerBorder();
+        });
+
+        canvas.on('object:modified', () => {
+            updateLayerBorder();
+            renderAllLayers();
+        });
+
+        canvas.on('object:added', updateLayerBorder);
+        
+        canvas.on('object:removed', () => {
+            updateLayerBorder();
+            renderAllLayers();
+        });
+
+        // ===== UNDO/REDO =====
+        function undo() {
+            showToast('Undo chưa implement', 'info');
+        }
+
+        function redo() {
+            showToast('Redo chưa implement', 'info');
+        }
+
+        // ===== DOWNLOAD =====
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'edited-image.png';
+            link.click();
+            showToast('Ảnh đã được tải xuống', 'success');
+        }
+
+        // ===== IMAGE INFO =====
+        function showImageInfo() {
+            document.getElementById('imageInfoModal').classList.add('active');
+            updateImageInfoModal();
+        }
+
+        function hideImageInfo() {
+            document.getElementById('imageInfoModal').classList.remove('active');
+        }
+
+        function updateImageInfoModal() {
+            const layer = layers[activeLayerIndex];
+            document.getElementById('modalImageSize').textContent = canvas.width + ' × ' + canvas.height + ' px';
+            document.getElementById('modalImageFormat').textContent = 'PNG/JPEG';
+            document.getElementById('currentLayerInfo').textContent = layer.name + ' (' + layer.color + ')';
+        }
+
+        // ===== LOADING & TOAST =====
+        function showLoading(text = 'Đang xử lý...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingSpinner').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingSpinner').classList.remove('active');
+        }
+
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // ===== KEYBOARD SHORTCUTS =====
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'z':
+                        e.preventDefault();
+                        undo();
+                        break;
+                    case 'y':
+                        e.preventDefault();
+                        redo();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        downloadImage();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        createNewLayer();
+                        break;
+                }
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                const obj = canvas.getActiveObject();
+                if (obj) {
+                    const layer = layers[activeLayerIndex];
+                    const index = layer.objects.indexOf(obj);
+                    if (index > -1) {
+                        layer.objects.splice(index, 1);
+                        canvas.remove(obj);
+                        canvas.renderAll();
+                        renderAllLayers();
+                        updateLayerBorder();
+                        showToast('🗑️ Đã xoá đối tượng', 'success');
+                    }
+                }
+            } else if (e.key === 'ArrowUp' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                moveLayerUp(activeLayerIndex);
+            } else if (e.key === 'ArrowDown' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                moveLayerDown(activeLayerIndex);
+            }
+        });
+
+        // ===== LAYER OPACITY CONTROL =====
+        function setLayerOpacity(index, opacity) {
+            layers[index].opacity = opacity;
+            const layer = layers[index];
+            layer.objects.forEach(obj => {
+                obj.opacity = opacity;
+            });
+            renderAllLayers();
+        }
+
+        // ===== MERGE LAYERS =====
+        function mergeLayers(index1, index2) {
+            if (index1 === index2) {
+                showToast('Chọn 2 layer khác nhau để merge', 'error');
+                return;
+            }
+
+            const layer1 = layers[Math.min(index1, index2)];
+            const layer2 = layers[Math.max(index1, index2)];
+
+            layer1.objects = layer1.objects.concat(layer2.objects);
+            layer1.name = layer1.name + ' + ' + layer2.name;
+
+            layers.splice(Math.max(index1, index2), 1);
+            activeLayerIndex = Math.min(index1, index2);
+            updateLayersUI();
+            updateCurrentLayerColor();
+            renderAllLayers();
+            showToast('✅ Merge layers thành công!', 'success');
+        }
+
+        // ===== FLATTEN IMAGE (Merge all visible layers) =====
+        function flattenImage() {
+            if (confirm('Flatten sẽ gộp tất cả các layer hiển thị. Tiếp tục?')) {
+                const flatLayer = {
+                    id: Date.now(),
+                    name: 'Flattened',
+                    color: '#000000',
+                    visible: true,
+                    objects: [],
+                    opacity: 1
+                };
+
+                layers.forEach(layer => {
+                    if (layer.visible) {
+                        flatLayer.objects = flatLayer.objects.concat(layer.objects);
+                    }
+                });
+
+                layers = [flatLayer];
+                activeLayerIndex = 0;
+                updateLayersUI();
+                updateCurrentLayerColor();
+                renderAllLayers();
+                showToast('✅ Flatten thành công!', 'success');
+            }
+        }
+
+        // ===== SELECT LAYER BY KEYBOARD =====
+        function selectLayerByNumber(num) {
+            if (num > 0 && num <= layers.length) {
+                selectLayer(num - 1);
+            }
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                to {
+                    transform: translateX(110%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
