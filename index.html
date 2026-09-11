@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Image Editor</title>
+<style>
+  :root{
+    --nen:#0f1020; --the:#1a1b33; --vien:#2c2e4f;
+    --chu:#f2f3ff; --chu-mo:#a8abcf; --nhan:#7c8cff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; padding:48px 20px;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    background:linear-gradient(135deg,#0f1020 0%,#231d45 100%);
+    color:var(--chu); display:flex; flex-direction:column; align-items:center;
+  }
+  h1{font-size:clamp(28px,5vw,44px); margin:0 0 8px; text-align:center}
+  .phu{color:var(--chu-mo); margin:0 0 40px; text-align:center; max-width:640px}
+  .luoi{display:grid; gap:20px; width:100%; max-width:880px;
+        grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .the{
+    background:var(--the); border:1px solid var(--vien); border-radius:16px;
+    padding:26px; text-decoration:none; color:inherit; display:block;
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .the:hover{transform:translateY(-4px); border-color:var(--nhan)}
+  .the h2{margin:0 0 10px; font-size:20px}
+  .the p{margin:0; color:var(--chu-mo); font-size:15px; line-height:1.55}
+  .vao{display:inline-block; margin-top:16px; color:var(--nhan); font-weight:600}
+  footer{margin-top:44px; color:var(--chu-mo); font-size:14px; text-align:center}
+  footer a{color:var(--nhan)}
+</style>
+</head>
+<body>
+  <h1>🎨 AI Image Editor</h1>
+  <p class="phu">Trình chỉnh sửa ảnh chạy thẳng trong trình duyệt — không cần cài đặt, không cần máy chủ.</p>
+
+  <div class="luoi">
+    <a class="the" href="editor/">
+      <h2>🖌️ Bản cơ bản</h2>
+      <p>Cắt, xoay, lật, bộ lọc, độ sáng và độ tương phản. Nhẹ, hợp cho chỉnh sửa nhanh trên điện thoại.</p>
+      <span class="vao">Mở trình chỉnh sửa →</span>
+    </a>
+    <a class="the" href="editor-pro/">
+      <h2>⚡ Bản nâng cao</h2>
+      <p>Đầy đủ quản lý lớp (layer), công cụ vẽ, văn bản, hình khối và các ô chờ nối tính năng AI.</p>
+      <span class="vao">Mở bản Pro →</span>
+    </a>
+  </div>
+
+  <footer>
+    Tài liệu nằm trong thư mục <code>docs/</code> ·
+    <a href="https://github.com/sotay99/thu-nghiem-01">Mã nguồn trên GitHub</a>
+  </footer>
+</body>
+</html>

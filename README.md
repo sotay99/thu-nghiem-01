@@ -1,4 +1,24 @@
-# 🎨 AI Image Editor - Hướng Dẫn Sử Dụng
+# 🎨 AI Image Editor
+
+**Xem trực tiếp:** https://sotay99.github.io/thu-nghiem-01/
+
+## 📁 Cấu trúc kho
+
+```
+index.html      → trang chủ, dẫn vào hai bản chỉnh sửa
+editor/         → bản cơ bản        (/editor/)
+editor-pro/     → bản nâng cao      (/editor-pro/)
+server/         → máy chủ API mẫu cho các tính năng AI (chạy tại máy)
+docs/           → toàn bộ tài liệu
+.github/workflows/deploy.yml → tự deploy lên GitHub Pages mỗi lần đẩy lên main
+```
+
+> Lưu ý: các tính năng AI gọi tới `http://localhost:8000/api`. Trên GitHub Pages
+> (chạy bằng HTTPS) trình duyệt sẽ chặn lời gọi này; muốn dùng thì phải trỏ
+> `API_BASE_URL` sang một máy chủ có HTTPS.
+
+---
+
 
 ## 📋 Mô Tả
 
@@ -47,7 +67,7 @@
 
 ### 1. **Mở File**
 ```html
-Mở file `image-editor.html` trong trình duyệt (Chrome, Firefox, Safari, Edge)
+Mở file `editor/index.html` trong trình duyệt (Chrome, Firefox, Safari, Edge)
 ```
 
 ### 2. **Tải Ảnh**
@@ -333,7 +353,7 @@ Khi bạn cần:
 
 Để thử ngay:
 ```
-1. Mở file image-editor.html trong trình duyệt
+1. Mở file editor/index.html trong trình duyệt
 2. Bấm "Tải Ảnh" 
 3. Chỉnh sửa bằng các công cụ
 4. Tải xuống kết quả
