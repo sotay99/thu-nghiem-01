@@ -74,6 +74,42 @@
             transform: translateY(-2px);
         }
 
+        /* .btn-header (chữ trắng, nền trắng mờ) chỉ đọc được trên thanh tiêu
+           đề nền gradient tím — dùng lại y hệt bên trong modal/khung nền
+           trắng (Thông Tin Ảnh, các nút Huỷ/Xác Nhận...) làm chữ trắng trên
+           nền trắng, gần như vô hình. Hai lớp dưới đây dành riêng cho nút
+           trên nền trắng: .btn-modal-primary (hành động chính, nền màu đặc)
+           và .btn-modal-secondary (huỷ/đóng, nền xám nhạt chữ đậm). */
+        .btn-modal-primary {
+            background: #667eea;
+            color: white;
+            border: 1px solid #667eea;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-modal-primary:hover {
+            filter: brightness(0.92);
+        }
+
+        .btn-modal-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #dee2e6;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-modal-secondary:hover {
+            background: #e9ecef;
+        }
+
         /* ===== MAIN CONTAINER ===== */
         .main-container {
             display: flex;
@@ -237,6 +273,9 @@
         /* ===== LAYERS PANEL ===== */
         .layers-panel {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
             border-top: 1px solid #dee2e6;
             padding-top: 15px;
         }
@@ -246,6 +285,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            flex-shrink: 0;
         }
 
         .layers-panel-title {
@@ -268,11 +308,16 @@
             overflow-x: hidden;
         }
 
+        /* Thẻ lớp/nhóm — tối giản hết mức: chỉ mắt ẩn/hiện (sát mép trái),
+           tên (sát mắt), và nút mở menu (sát mép phải). Mọi thao tác khác
+           (đổi tên, nhân đôi, lên/xuống, xoá, xem thành phần, mở/thu gọn
+           danh sách con, bỏ nhóm, kéo để sắp xếp...) đều nằm trong menu thả
+           xuống — xem showLayerMenu()/showGroupMenu(). Cao đúng 1 dòng chữ. */
         .layer-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px;
+            padding: 6px 8px;
             background: #f8f9fa;
             border: 2px solid transparent;
             border-radius: 6px;
@@ -280,6 +325,7 @@
             transition: all 0.3s;
             position: relative;
             min-width: 0;
+            line-height: 1.3;
         }
 
         .layer-item.active {
@@ -299,47 +345,13 @@
             flex-shrink: 0;
         }
 
-        .layer-color-indicator {
-            width: 8px;
-            height: 20px;
-            border-radius: 3px;
-            flex-shrink: 0;
-        }
-
-        /* Mọi thao tác của 1 lớp/nhóm (đổi tên, ẩn-hiện, nhân đôi, lên/
-           xuống, xoá, xem thành phần, bỏ nhóm...) đều gộp vào 1 menu thả
-           xuống — bấm vùng tên hoặc dấu ⋮ để mở — nên mỗi hàng chỉ còn:
-           tay cầm kéo, mũi tên mở rộng (nhóm), mắt ẩn/hiện, chấm màu, tên.
-           Không còn dãy nút riêng dễ tràn ngang trên màn hình hẹp. */
-        .layer-main {
-            flex: 1 1 auto;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            cursor: pointer;
-            padding: 4px 6px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-
-        .layer-main:hover {
-            background: #f0f0f0;
-        }
-
-        .layer-main-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            min-width: 0;
-        }
-
         .layer-name-text {
             flex: 1;
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            cursor: pointer;
         }
 
         .layer-count-badge {
@@ -348,30 +360,26 @@
             flex-shrink: 0;
         }
 
-        .layer-more-icon {
-            font-size: 0.8rem;
-            color: #999;
+        .layer-menu-trigger {
             flex-shrink: 0;
-        }
-
-        .layer-meta-row {
-            font-size: 0.72rem;
-            color: #999;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .layer-name-input {
-            flex: 1;
-            min-width: 0;
-            background: white;
-            border: 1px solid #dee2e6;
-            padding: 3px 6px;
+            width: 22px;
+            height: 22px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
             border-radius: 4px;
-            font-size: 0.85rem;
-            color: #333;
             cursor: pointer;
+            color: #999;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .layer-menu-trigger:hover {
+            background: rgba(0,0,0,0.08);
+            color: #333;
         }
 
         .layer-controls {
@@ -514,9 +522,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 8px;
             font-weight: 600;
             color: #333;
             font-size: 0.9rem;
+        }
+
+        .dropdown-menu-header-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .dropdown-menu-header-name span:last-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Thông tin blend mode/opacity của lớp — trước đây hiện ngay trên
+           thẻ lớp, nay dời vào đây để thẻ lớp tối giản chỉ còn mắt/tên/nút
+           menu. */
+        .dropdown-menu-subtitle {
+            padding: 6px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.78rem;
+            color: #999;
         }
 
         .dropdown-close-btn {
@@ -597,27 +630,6 @@
             display: flex;
             align-items: stretch;
             gap: 0;
-        }
-
-        .layer-tree-expander {
-            min-width: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            user-select: none;
-            font-size: 0.9rem;
-            color: #667eea;
-            transition: all 0.2s;
-        }
-
-        .layer-tree-expander:hover {
-            color: #764ba2;
-        }
-
-        .layer-tree-expander.empty {
-            color: transparent;
-            cursor: default;
         }
 
         .layer-tree-content {
@@ -1405,6 +1417,25 @@
                     <i class="fas fa-redo"></i> Làm Lại
                 </button>
             </div>
+
+            <!-- MÀU TÔ + THÔNG TIN ẢNH (chuyển từ khung bên phải xuống cuối
+                 khung Công Cụ để khung Lớp bên phải có thêm chỗ) -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    <i class="fas fa-palette"></i> Màu Tô
+                </div>
+                <div class="property-group">
+                    <div class="color-picker-group">
+                        <input type="color" id="fillColor" value="#000000" class="color-input">
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <button class="tool-btn" onclick="showImageInfo()">
+                    <i class="fas fa-info-circle"></i> Thông Tin Ảnh
+                </button>
+            </div>
         </div>
 
         <!-- CANVAS AREA -->
@@ -1428,7 +1459,7 @@
                 <div class="canvas-empty">
                     <i class="fas fa-image"></i>
                     <p>Tải một ảnh để bắt đầu</p>
-                    <button class="btn-header" onclick="showUploadModal()">
+                    <button class="btn-modal-primary" onclick="showUploadModal()">
                         <i class="fas fa-upload"></i> Chọn Ảnh
                     </button>
                 </div>
@@ -1474,20 +1505,6 @@
                     </div>
                 </div>
 
-                <div class="divider"></div>
-
-                <div class="property-group">
-                    <label class="property-label">Màu Tô</label>
-                    <div class="color-picker-group">
-                        <input type="color" id="fillColor" value="#000000" class="color-input">
-                    </div>
-                </div>
-
-                <div class="divider"></div>
-
-                <button class="btn-header" style="width: 100%; text-align: center;" onclick="showImageInfo()">
-                    <i class="fas fa-info-circle"></i> Thông Tin Ảnh
-                </button>
             </div>
 
             <!-- LAYERS PANEL -->
@@ -1496,7 +1513,7 @@
                     <div class="layers-panel-title">
                         <i class="fas fa-layer-group"></i> Layers
                     </div>
-                    <button class="btn-header" onclick="toggleBlendOpacityPanel()" title="Blend & Opacity (🎨)">
+                    <button class="layer-btn" style="width: 28px; height: 28px; font-size: 0.9rem;" onclick="toggleBlendOpacityPanel()" title="Blend & Opacity (🎨)">
                         <i class="fas fa-palette"></i>
                     </button>
                 </div>
@@ -1621,10 +1638,10 @@
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <button class="btn-header" style="flex: 1; padding: 10px; background: #764ba2;" onclick="executeGroupLayers()">
+                <button class="btn-modal-primary" style="flex: 1; padding: 10px; background: #764ba2; border-color: #764ba2;" onclick="executeGroupLayers()">
                     <i class="fas fa-check"></i> Bắt Đầu Nhóm
                 </button>
-                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="hideGroupModal()">
+                <button class="btn-modal-secondary" style="flex: 1; padding: 10px;" onclick="hideGroupModal()">
                     <i class="fas fa-times"></i> Hủy Nhóm
                 </button>
             </div>
@@ -1657,10 +1674,10 @@
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <button class="btn-header" style="flex: 1; padding: 10px; background: #28a745;" onclick="executeMergeLayers()">
+                <button class="btn-modal-primary" style="flex: 1; padding: 10px; background: #28a745; border-color: #28a745;" onclick="executeMergeLayers()">
                     <i class="fas fa-check"></i> Bắt Đầu Gộp
                 </button>
-                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="hideMergeModal()">
+                <button class="btn-modal-secondary" style="flex: 1; padding: 10px;" onclick="hideMergeModal()">
                     <i class="fas fa-times"></i> Hủy Gộp
                 </button>
             </div>
@@ -1806,10 +1823,10 @@
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <button class="btn-header" style="flex: 1; padding: 10px; background: #667eea;" onclick="confirmRenameLayer()">
+                <button class="btn-modal-primary" style="flex: 1; padding: 10px;" onclick="confirmRenameLayer()">
                     <i class="fas fa-check"></i> Xác Nhận
                 </button>
-                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="hideRenameModal()">
+                <button class="btn-modal-secondary" style="flex: 1; padding: 10px;" onclick="hideRenameModal()">
                     <i class="fas fa-times"></i> Hủy
                 </button>
             </div>
@@ -1829,10 +1846,10 @@
                     placeholder="Ví dụ: bầu trời xanh, hoa hồng..."></textarea>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="executeInpaint()">
+                <button class="btn-modal-primary" style="flex: 1; padding: 10px;" onclick="executeInpaint()">
                     <i class="fas fa-check"></i> Thực Hiện
                 </button>
-                <button class="btn-header" style="flex: 1; padding: 10px;" onclick="hideInpaintModal()">
+                <button class="btn-modal-secondary" style="flex: 1; padding: 10px;" onclick="hideInpaintModal()">
                     <i class="fas fa-times"></i> Hủy
                 </button>
             </div>
@@ -2677,10 +2694,16 @@
 
             let menuHTML = `
                 <div class="dropdown-menu-header">
-                    Menu Lớp
+                    <span class="dropdown-menu-header-name">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: ${layer.color}; flex-shrink: 0;"></span>
+                        <span>${escapeHtmlText(layer.name)}</span>
+                    </span>
                     <button class="dropdown-close-btn" onclick="event.stopPropagation(); closeAllMenus()">
                         <i class="fas fa-times"></i>
                     </button>
+                </div>
+                <div class="dropdown-menu-subtitle">
+                    🎨 ${layer.blendMode || 'normal'} • 👁️ ${Math.round((layer.opacity || 1) * 100)}%
                 </div>
                 <div class="dropdown-menu-item" onclick="event.stopPropagation(); closeAllMenus(); openRenameModal(${layerIndex})">
                     <i class="fas fa-edit"></i> Đổi Tên
@@ -2739,10 +2762,16 @@
 
             menu.innerHTML = `
                 <div class="dropdown-menu-header">
-                    Menu Lớp
+                    <span class="dropdown-menu-header-name">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: ${layer.color}; flex-shrink: 0;"></span>
+                        <span>${escapeHtmlText(layer.name)}</span>
+                    </span>
                     <button class="dropdown-close-btn" onclick="event.stopPropagation(); closeAllMenus()">
                         <i class="fas fa-times"></i>
                     </button>
+                </div>
+                <div class="dropdown-menu-subtitle">
+                    🎨 ${layer.blendMode || 'normal'} • 👁️ ${Math.round((layer.opacity || 1) * 100)}%
                 </div>
                 <div class="dropdown-menu-item" onclick="event.stopPropagation(); closeAllMenus(); openRenameModalById(${id})">
                     <i class="fas fa-edit"></i> Đổi Tên
@@ -2828,12 +2857,23 @@
             const groupRef = resolveLayerRef(groupId);
             const groupLayer = groupRef ? groupRef.container[groupRef.index] : null;
 
+            const isExpanded = group ? !group.collapsed : true;
+            const expandIcon = isExpanded ? 'fa-angle-up' : 'fa-angle-down';
+            const expandLabel = isExpanded ? 'Ẩn Danh Sách Lớp Con' : 'Hiện Danh Sách Lớp Con';
+            const childCount = group ? group.children.length : 0;
+
             let menuHTML = `
                 <div class="dropdown-menu-header">
-                    Tùy Chọn Nhóm
+                    <span class="dropdown-menu-header-name">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #000000; flex-shrink: 0;"></span>
+                        <span>${escapeHtmlText(groupLayer ? groupLayer.name : '')}</span>
+                    </span>
                     <button class="dropdown-close-btn" onclick="event.stopPropagation(); closeAllMenus()">
                         <i class="fas fa-times"></i>
                     </button>
+                </div>
+                <div class="dropdown-menu-subtitle">
+                    🎨 ${groupLayer ? (groupLayer.blendMode || 'normal') : 'normal'} • 👁️ ${Math.round(((groupLayer && groupLayer.opacity) || 1) * 100)}%
                 </div>
                 <div class="dropdown-menu-item" onclick="event.stopPropagation(); closeAllMenus(); openGroupRenameModal(${layerIndex}, ${groupId})">
                     <i class="fas fa-edit"></i> Đổi Tên
@@ -2846,6 +2886,9 @@
                 </div>
                 <div class="dropdown-menu-item" onclick="event.stopPropagation(); closeAllMenus(); moveLayerDownById(${groupId})">
                     <i class="fas fa-chevron-down"></i> Xuống Dưới
+                </div>
+                <div class="dropdown-menu-item" onclick="event.stopPropagation(); closeAllMenus(); toggleGroupExpanded(${groupId})">
+                    <i class="fas ${expandIcon}"></i> ${expandLabel} (${childCount})
                 </div>
                 <div class="dropdown-menu-item" onclick="event.stopPropagation(); toggleGroupContentsShown(${groupId}, ${layerIndex}, event)">
                     <i class="fas ${contentsIcon}"></i> ${contentsLabel}
@@ -3292,33 +3335,22 @@
                         // dù nhóm nằm ở cấp cao nhất hay lồng trong nhóm khác.
                         const visibilityAction = `toggleLayerVisibilityById(${layer.id})`;
                         const menuAction = isNested ? `showGroupMenu(-1, ${layer.groupId}, event)` : `showGroupMenu(${globalIndex}, ${layer.groupId}, event)`;
+                        const showDragHandle = !isNested && globalIndex === dragRevealIndex;
 
-                        // Mọi thao tác khác (đổi tên, ẩn/hiện, lên/xuống, xoá,
-                        // xem thành phần, bỏ nhóm...) đều gộp vào CHUNG 1 menu
-                        // thả xuống (bấm tên để mở) — panel vì vậy không còn
-                        // hàng nút riêng lẻ dễ tràn ngang trên màn hình hẹp.
+                        // Thẻ tối giản hết mức: chỉ mắt ẩn/hiện (sát trái),
+                        // tên (📁 + số lớp con), và nút mở menu (sát phải).
+                        // Mọi thao tác khác (đổi tên, lên/xuống, xoá, xem
+                        // thành phần, mở/thu gọn danh sách con, bỏ nhóm...)
+                        // đều nằm trong menu đó — xem showGroupMenu().
                         groupEl.innerHTML = `
-                            <div style="display: flex; align-items: center; width: 100%; gap: 6px;">
-                                <div class="drag-handle ${!isNested && globalIndex === dragRevealIndex ? 'drag-handle-visible' : ''}" title="Kéo để sắp xếp lại">⋮⋮</div>
-                                <div class="layer-tree-expander" onclick="event.stopPropagation(); toggleGroupExpanded(${layer.groupId})">
-                                    ${group.children.length > 0 ? (isExpanded ? '▼' : '▶') : '·'}
-                                </div>
-                                <div class="layer-visibility" onclick="event.stopPropagation(); ${visibilityAction}">
-                                    <i class="fas ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
-                                </div>
-                                <div class="layer-color-indicator" style="background: #000000;"></div>
-                                <div class="layer-main" onclick="event.stopPropagation(); ${menuAction}" oncontextmenu="event.preventDefault(); ${menuAction}">
-                                    <div class="layer-main-row">
-                                        <span class="layer-name-text" style="color: #000000;">📁 ${escapeHtmlText(layer.name)}</span>
-                                        <span class="layer-count-badge">${group.children.length}</span>
-                                        <i class="fas fa-ellipsis-vertical layer-more-icon"></i>
-                                    </div>
-                                    <div class="layer-meta-row">
-                                        <span title="Blend Mode">🎨 ${layer.blendMode || 'normal'}</span> •
-                                        <span title="Opacity">👁️ ${Math.round((layer.opacity || 1) * 100)}%</span>
-                                    </div>
-                                </div>
+                            <div class="layer-visibility" onclick="event.stopPropagation(); ${visibilityAction}">
+                                <i class="fas ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
                             </div>
+                            ${showDragHandle ? `<div class="drag-handle drag-handle-visible" title="Kéo để sắp xếp lại">⋮⋮</div>` : ''}
+                            <span class="layer-name-text" style="color: #000000;" onclick="event.stopPropagation(); ${menuAction}" oncontextmenu="event.preventDefault(); ${menuAction}">📁 ${escapeHtmlText(layer.name)} <span class="layer-count-badge">(${group.children.length})</span></span>
+                            <button class="layer-menu-trigger" onclick="event.stopPropagation(); ${menuAction}" title="Tuỳ chọn">
+                                <i class="fas fa-ellipsis-vertical"></i>
+                            </button>
                             <div class="group-mode-indicator">👥</div>
                             <div class="multi-select-badge">${multiSelectedIndices.size}</div>
                         `;
@@ -3359,34 +3391,22 @@
 
                         const visibilityAction = isNested ? `toggleLayerVisibilityById(${layer.id})` : `toggleLayerVisibility(${globalIndex})`;
                         const menuAction = isNested ? `showNestedLayerMenu(${layer.id}, event)` : `showLayerMenu(${globalIndex}, event)`;
-                        const renameAction = isNested ? `renameLayerById(${layer.id}, this.value)` : `renameLayer(${globalIndex}, this.value)`;
+                        const showDragHandle = !isNested && globalIndex === dragRevealIndex;
 
-                        // Mọi thao tác khác (nhân đôi, lên/xuống, xoá, di
-                        // chuyển sang nhóm...) gộp vào chung 1 menu thả xuống
-                        // (bấm vào tên, hoặc vào dấu ⋮ để mở) thay vì mỗi lớp
-                        // một hàng nút riêng — đỡ tràn ngang trên màn hình hẹp.
+                        // Thẻ tối giản hết mức: chỉ mắt ẩn/hiện (sát trái),
+                        // tên, và nút mở menu (sát phải) — không còn bấm vào
+                        // tên để đổi tên trực tiếp nữa, phải qua menu ("Đổi
+                        // Tên"). Nhân đôi/lên/xuống/xoá/di chuyển sang nhóm...
+                        // đều nằm trong menu đó — xem showLayerMenu().
                         layerEl.innerHTML = `
-                            <div style="display: flex; align-items: center; width: 100%; gap: 6px;">
-                                <div class="drag-handle ${!isNested && globalIndex === dragRevealIndex ? 'drag-handle-visible' : ''}" title="Kéo để sắp xếp lại">⋮⋮</div>
-                                <div class="layer-tree-expander empty">·</div>
-                                <div class="layer-visibility" onclick="event.stopPropagation(); ${visibilityAction}">
-                                    <i class="fas ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
-                                </div>
-                                <div class="layer-color-indicator" style="background: ${layer.color};"></div>
-                                <div class="layer-main" onclick="event.stopPropagation(); ${menuAction}">
-                                    <div class="layer-main-row">
-                                        <input type="text" class="layer-name-input" value="${escapeHtmlText(layer.name)}"
-                                               onclick="event.stopPropagation(); this.select()"
-                                               onchange="${renameAction}"
-                                               onblur="this.blur()">
-                                        <i class="fas fa-ellipsis-vertical layer-more-icon"></i>
-                                    </div>
-                                    <div class="layer-meta-row">
-                                        <span title="Blend Mode">🎨 ${layer.blendMode || 'normal'}</span> •
-                                        <span title="Opacity">👁️ ${Math.round((layer.opacity || 1) * 100)}%</span>
-                                    </div>
-                                </div>
+                            <div class="layer-visibility" onclick="event.stopPropagation(); ${visibilityAction}">
+                                <i class="fas ${layer.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
                             </div>
+                            ${showDragHandle ? `<div class="drag-handle drag-handle-visible" title="Kéo để sắp xếp lại">⋮⋮</div>` : ''}
+                            <span class="layer-name-text" onclick="event.stopPropagation(); ${menuAction}">${escapeHtmlText(layer.name)}</span>
+                            <button class="layer-menu-trigger" onclick="event.stopPropagation(); ${menuAction}" title="Tuỳ chọn">
+                                <i class="fas fa-ellipsis-vertical"></i>
+                            </button>
                             <div class="multi-select-badge">${multiSelectedIndices.size}</div>
                         `;
 
@@ -4083,10 +4103,10 @@
                 box-shadow: 0 4px 14px rgba(0,0,0,0.2);
             `;
             bar.innerHTML = `
-                <button class="btn-header" style="color:${color}; border-color:${color};" onclick="confirmCrop()">
+                <button class="btn-modal-secondary" style="color:${color}; border-color:${color};" onclick="confirmCrop()">
                     <i class="fas fa-check"></i> Xác nhận cắt
                 </button>
-                <button class="btn-header" onclick="cancelCrop()">
+                <button class="btn-modal-secondary" onclick="cancelCrop()">
                     <i class="fas fa-times"></i> Huỷ cắt
                 </button>
             `;
