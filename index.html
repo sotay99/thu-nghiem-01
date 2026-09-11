@@ -1718,7 +1718,8 @@
             });
 
             setupDragAndDrop();
-            
+            bindCanvasEvents();
+
             // Create initial background layer
             createBackgroundLayer();
             showToast('Sẵn sàng! Tải ảnh để bắt đầu', 'success');
@@ -1932,6 +1933,11 @@
         function executeMergeLayers() {
             if (layersToMerge.size < 2) {
                 showToast('❌ Vui lòng chọn ít nhất 2 lớp để gộp!', 'error');
+                return;
+            }
+
+            if (Array.from(layersToMerge).some(index => layers[index] && layers[index].isGroup)) {
+                showToast('❌ Không thể gộp một nhóm lớp! Hãy bỏ nhóm hoặc chỉ chọn các lớp thường.', 'error');
                 return;
             }
 
@@ -2414,7 +2420,7 @@
             const menu = document.createElement('div');
             menu.className = 'layer-dropdown-menu';
             menu.style.left = '0';
-            menu.style.top = event.currentTarget.offsetHeight + 'px';
+            menu.style.bottom = '100%'; menu.style.top = 'auto';
             
             let menuHTML = `
                 <div class="dropdown-menu-header">
@@ -2454,7 +2460,7 @@
             const menu = document.createElement('div');
             menu.className = 'layer-dropdown-menu';
             menu.style.left = '0';
-            menu.style.top = event.currentTarget.offsetHeight + 'px';
+            menu.style.bottom = '100%'; menu.style.top = 'auto';
             
             let menuHTML = `
                 <div class="dropdown-menu-header">
@@ -2640,27 +2646,56 @@
             showToast(`Layer "${layers[index].name}" ${layers[index].visible ? 'hiển thị' : 'ẩn'}`, 'success');
         }
 
+        // Trả về danh sách "lớp thật" (có objects) nằm trong một danh sách lớp,
+        // đi sâu vào bên trong các nhóm (kể cả nhóm lồng nhóm), cộng dồn
+        // opacity/ẩn-hiện của nhóm cha vào từng lớp con.
+        function flattenLayersForRender(layerList, inheritedOpacity = 1, inheritedVisible = true) {
+            let result = [];
+            layerList.forEach(layer => {
+                const visible = inheritedVisible && layer.visible;
+                const opacity = inheritedOpacity * (layer.opacity != null ? layer.opacity : 1);
+
+                if (layer.isGroup) {
+                    const group = layerGroups.find(g => g.id === layer.groupId);
+                    if (group) {
+                        result = result.concat(flattenLayersForRender(group.children, opacity, visible));
+                    }
+                } else {
+                    result.push({ layer, visible, opacity });
+                }
+            });
+            return result;
+        }
+
+        // canvas.clear() phát ra sự kiện 'object:removed' cho từng đối tượng,
+        // mà sự kiện đó lại gọi renderAllLayers() (xem bindCanvasEvents) — nếu
+        // không chặn, mỗi lần render sẽ tự gọi lại chính nó và tràn stack.
+        let isRenderingLayers = false;
+
         function renderAllLayers() {
+            if (isRenderingLayers) return;
+            isRenderingLayers = true;
+
             canvas.clear();
-            
-            // Render all visible layers from bottom to top
-            layers.forEach(layer => {
-                if (layer.visible && layer.objects.length > 0) {
+
+            // Render tất cả lớp (kể cả lớp nằm trong nhóm) từ dưới lên trên
+            flattenLayersForRender(layers).forEach(({ layer, visible, opacity }) => {
+                if (visible && layer.objects && layer.objects.length > 0) {
                     layer.objects.forEach(obj => {
-                        // Apply opacity and blend mode
-                        obj.opacity = (obj.opacity || 1) * (layer.opacity || 1);
-                        
-                        // Apply blend mode if supported
+                        // Áp opacity và blend mode (đã cộng dồn cả opacity của nhóm cha)
+                        obj.opacity = opacity;
+
                         if (layer.blendMode && layer.blendMode !== 'normal') {
                             obj.globalCompositeOperation = layer.blendMode;
                         }
-                        
+
                         canvas.add(obj);
                     });
                 }
             });
-            
+
             canvas.renderAll();
+            isRenderingLayers = false;
             updateLayerBorder();
         }
 
@@ -3352,10 +3387,25 @@
             showToast(`✏️ Thêm text vào layer mới: "${layer.name}"`, 'success');
         }
 
+        // Trả về danh sách "lớp thật" (có objects) bên trong 1 lớp — nếu là
+        // lớp thường thì trả về chính nó, nếu là nhóm thì đi sâu vào mọi lớp
+        // con (kể cả nhóm lồng nhóm) để thao tác tác động cho cả nhóm.
+        function getLeafLayers(layer) {
+            if (!layer) return [];
+            if (!layer.isGroup) return [layer];
+            const group = layerGroups.find(g => g.id === layer.groupId);
+            if (!group) return [];
+            let result = [];
+            group.children.forEach(child => {
+                result = result.concat(getLeafLayers(child));
+            });
+            return result;
+        }
+
         function addShape() {
-            if (!layers[activeLayerIndex]) return;
+            createNewLayer();
             const layer = layers[activeLayerIndex];
-            
+
             const shape = new fabric.Circle({
                 left: canvas.width / 2 - 50,
                 top: canvas.height / 2 - 50,
@@ -3369,26 +3419,28 @@
             canvas.setActiveObject(shape);
             canvas.renderAll();
             updateLayerBorder();
-            showToast(`✨ Thêm hình vào ${layer.name}`, 'success');
+            showToast(`✨ Thêm hình vào layer mới: "${layer.name}"`, 'success');
         }
 
         function rotateImage() {
             const layer = layers[activeLayerIndex];
-            if (layer.objects.length === 0) {
+            const targetLayers = getLeafLayers(layer);
+            const hasObjects = targetLayers.some(l => l.objects.length > 0);
+            if (!hasObjects) {
                 showToast('Layer trống! Thêm ảnh trước', 'error');
                 return;
             }
 
-            const obj = canvas.getActiveObject();
+            const obj = !layer.isGroup ? canvas.getActiveObject() : null;
             if (!obj) {
-                // Rotate all objects in layer
-                layer.objects.forEach(o => {
-                    o.rotate((o.angle || 0) + 15);
+                // Xoay mọi đối tượng của lớp (hoặc mọi lớp trong nhóm)
+                targetLayers.forEach(l => {
+                    l.objects.forEach(o => o.rotate((o.angle || 0) + 15));
                 });
             } else {
                 obj.rotate((obj.angle || 0) + 15);
             }
-            
+
             canvas.renderAll();
             updateLayerBorder();
             showToast(`🔄 Xoay trên ${layer.name}`, 'success');
@@ -3396,33 +3448,163 @@
 
         function flipImageHorizontal() {
             const layer = layers[activeLayerIndex];
-            if (layer.objects.length === 0) {
+            const targetLayers = getLeafLayers(layer);
+            const hasObjects = targetLayers.some(l => l.objects.length > 0);
+            if (!hasObjects) {
                 showToast('Layer trống! Thêm ảnh trước', 'error');
                 return;
             }
 
-            const obj = canvas.getActiveObject();
+            const obj = !layer.isGroup ? canvas.getActiveObject() : null;
             if (!obj) {
-                // Flip all objects in layer
-                layer.objects.forEach(o => {
-                    o.flipX = !o.flipX;
+                // Lật mọi đối tượng của lớp (hoặc mọi lớp trong nhóm)
+                targetLayers.forEach(l => {
+                    l.objects.forEach(o => { o.flipX = !o.flipX; });
                 });
             } else {
                 obj.flipX = !obj.flipX;
             }
-            
+
             canvas.renderAll();
             updateLayerBorder();
             showToast(`↔️ Lật ngang trên ${layer.name}`, 'success');
         }
 
+        // ===== CẮT ẢNH (CROP) =====
+        // Cắt trên đúng lớp đang chọn: kéo khung để chọn vùng giữ lại rồi
+        // bấm "Xác nhận cắt". Chỉ áp dụng cho ảnh chưa xoay (angle = 0) để
+        // tránh sai lệch toạ độ khi tính khung cắt.
+        let cropOverlayRect = null;
+        let cropTargetImage = null;
+
         function cropImage() {
-            showToast('Chức năng crop sẽ được thêm', 'info');
+            const layer = layers[activeLayerIndex];
+            if (!layer || layer.isGroup) {
+                showToast('❌ Không thể cắt cả nhóm lớp! Vui lòng chọn một lớp riêng lẻ.', 'error');
+                return;
+            }
+            if (cropOverlayRect) {
+                showToast('Đang cắt dở, hãy Xác nhận hoặc Huỷ trước', 'info');
+                return;
+            }
+
+            const obj = layer.objects.find(o => o.isType && o.isType('image'));
+            if (!obj) {
+                showToast('Không tìm thấy ảnh trong layer', 'error');
+                return;
+            }
+            if (obj.angle) {
+                showToast('Vui lòng đưa ảnh về góc xoay 0° trước khi cắt', 'error');
+                return;
+            }
+
+            cropTargetImage = obj;
+            const bounds = obj.getBoundingRect();
+
+            cropOverlayRect = new fabric.Rect({
+                left: bounds.left + bounds.width * 0.1,
+                top: bounds.top + bounds.height * 0.1,
+                width: bounds.width * 0.8,
+                height: bounds.height * 0.8,
+                fill: 'rgba(0,0,0,0.15)',
+                stroke: layer.color,
+                strokeWidth: 2,
+                strokeDashArray: [6, 4],
+                cornerColor: layer.color,
+                transparentCorners: false,
+                lockRotation: true,
+            });
+            cropOverlayRect.setControlsVisibility({ mtr: false });
+            canvas.add(cropOverlayRect);
+            canvas.setActiveObject(cropOverlayRect);
+            canvas.renderAll();
+
+            showCropConfirmBar(layer.color);
+            showToast('🖼️ Kéo khung để chọn vùng cắt, rồi bấm Xác nhận cắt', 'info');
+        }
+
+        function showCropConfirmBar(color) {
+            hideCropConfirmBar();
+            const bar = document.createElement('div');
+            bar.id = 'cropConfirmBar';
+            bar.style.cssText = `
+                position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+                background: #fff; border: 2px solid ${color}; border-radius: 8px;
+                padding: 10px 16px; display: flex; gap: 10px; z-index: 5000;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+            `;
+            bar.innerHTML = `
+                <button class="btn-header" style="color:${color}; border-color:${color};" onclick="confirmCrop()">
+                    <i class="fas fa-check"></i> Xác nhận cắt
+                </button>
+                <button class="btn-header" onclick="cancelCrop()">
+                    <i class="fas fa-times"></i> Huỷ cắt
+                </button>
+            `;
+            document.body.appendChild(bar);
+        }
+
+        function hideCropConfirmBar() {
+            const bar = document.getElementById('cropConfirmBar');
+            if (bar) bar.remove();
+        }
+
+        function cancelCrop() {
+            if (cropOverlayRect) {
+                canvas.remove(cropOverlayRect);
+                cropOverlayRect = null;
+                cropTargetImage = null;
+                canvas.renderAll();
+            }
+            hideCropConfirmBar();
+        }
+
+        function confirmCrop() {
+            if (!cropOverlayRect || !cropTargetImage) return;
+
+            const rectBounds = cropOverlayRect.getBoundingRect();
+            const imgBounds = cropTargetImage.getBoundingRect();
+
+            // Giao của khung cắt với ảnh, quy về hệ toạ độ chưa scale của ảnh
+            const scaleX = cropTargetImage.scaleX || 1;
+            const scaleY = cropTargetImage.scaleY || 1;
+
+            const left = Math.max(rectBounds.left, imgBounds.left);
+            const top = Math.max(rectBounds.top, imgBounds.top);
+            const right = Math.min(rectBounds.left + rectBounds.width, imgBounds.left + imgBounds.width);
+            const bottom = Math.min(rectBounds.top + rectBounds.height, imgBounds.top + imgBounds.height);
+
+            if (right <= left || bottom <= top) {
+                showToast('❌ Khung cắt nằm ngoài ảnh', 'error');
+                return;
+            }
+
+            cropTargetImage.set({
+                cropX: (left - imgBounds.left) / scaleX,
+                cropY: (top - imgBounds.top) / scaleY,
+                width: (right - left) / scaleX,
+                height: (bottom - top) / scaleY,
+                left: left,
+                top: top,
+            });
+            cropTargetImage.setCoords();
+
+            canvas.remove(cropOverlayRect);
+            cropOverlayRect = null;
+            cropTargetImage = null;
+            hideCropConfirmBar();
+            canvas.renderAll();
+            updateLayerBorder();
+            showToast('✅ Đã cắt ảnh', 'success');
         }
 
         // ===== FILTERS =====
         function applyFilter(filterType) {
             const layer = layers[activeLayerIndex];
+            if (layer.isGroup) {
+                showToast('❌ Không thể lọc cả nhóm lớp! Vui lòng chọn một lớp riêng lẻ.', 'error');
+                return;
+            }
             if (layer.objects.length === 0) {
                 showToast('Layer trống! Thêm ảnh trước', 'error');
                 return;
@@ -3455,6 +3637,7 @@
         function updateBrightness(value) {
             document.getElementById('brightnessValue').textContent = value + '%';
             const layer = layers[activeLayerIndex];
+            if (!layer || layer.isGroup) return;
             const obj = layer.objects.find(o => o.isType && o.isType('image'));
             if (obj) {
                 obj.filters = [new fabric.Image.filters.Brightness({ brightness: value / 100 })];
@@ -3466,6 +3649,7 @@
         function updateContrast(value) {
             document.getElementById('contrastValue').textContent = value + '%';
             const layer = layers[activeLayerIndex];
+            if (!layer || layer.isGroup) return;
             const obj = layer.objects.find(o => o.isType && o.isType('image'));
             if (obj) {
                 obj.filters = [new fabric.Image.filters.Contrast({ contrast: value / 100 })];
@@ -3477,6 +3661,7 @@
         function updateSaturation(value) {
             document.getElementById('saturationValue').textContent = value + '%';
             const layer = layers[activeLayerIndex];
+            if (!layer || layer.isGroup) return;
             const obj = layer.objects.find(o => o.isType && o.isType('image'));
             if (obj) {
                 obj.filters = [new fabric.Image.filters.Saturation({ saturation: value / 100 })];
@@ -3585,7 +3770,7 @@
             const border = document.getElementById('layerBorder');
             const layer = layers[activeLayerIndex];
             
-            if (!layer || layer.objects.length === 0) {
+            if (!layer || layer.isGroup || !layer.objects || layer.objects.length === 0) {
                 border.classList.remove('visible');
                 return;
             }
@@ -3769,31 +3954,37 @@
         }
 
         // ===== CANVAS EVENT LISTENERS =====
-        canvas.on('selection:created', () => {
-            updateLayerBorder();
-            const obj = canvas.getActiveObject();
-            if (obj) {
-                showToast(`Chọn: ${obj.name || 'Đối tượng'}`, 'info');
-            }
-        });
+        // Lỗi cũ: khối này từng nằm ở cấp cao nhất của <script>, chạy trước
+        // khi DOMContentLoaded gán biến `canvas`, nên canvas luôn là null và
+        // toàn bộ trang báo lỗi ngay khi tải — không có sự kiện nào được gắn.
+        // Nay gọi trong bindCanvasEvents() ngay sau khi canvas được tạo.
+        function bindCanvasEvents() {
+            canvas.on('selection:created', () => {
+                updateLayerBorder();
+                const obj = canvas.getActiveObject();
+                if (obj) {
+                    showToast(`Chọn: ${obj.name || 'Đối tượng'}`, 'info');
+                }
+            });
 
-        canvas.on('selection:updated', updateLayerBorder);
-        
-        canvas.on('selection:cleared', () => {
-            updateLayerBorder();
-        });
+            canvas.on('selection:updated', updateLayerBorder);
 
-        canvas.on('object:modified', () => {
-            updateLayerBorder();
-            renderAllLayers();
-        });
+            canvas.on('selection:cleared', () => {
+                updateLayerBorder();
+            });
 
-        canvas.on('object:added', updateLayerBorder);
-        
-        canvas.on('object:removed', () => {
-            updateLayerBorder();
-            renderAllLayers();
-        });
+            canvas.on('object:modified', () => {
+                updateLayerBorder();
+                renderAllLayers();
+            });
+
+            canvas.on('object:added', updateLayerBorder);
+
+            canvas.on('object:removed', () => {
+                updateLayerBorder();
+                renderAllLayers();
+            });
+        }
 
         // ===== UNDO/REDO =====
         function undo() {
